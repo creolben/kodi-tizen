@@ -336,3 +336,7 @@ endif()
 if("webos" IN_LIST CORE_PLATFORM_NAME_LC)
   include(${CMAKE_SOURCE_DIR}/cmake/scripts/webos/Install.cmake)
 endif()
+
+if("tizen" IN_LIST CORE_PLATFORM_NAME_LC OR TARGET_TIZEN)
+  include(${CMAKE_SOURCE_DIR}/cmake/scripts/tizen/Install.cmake)
+endif()

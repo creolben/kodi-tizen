@@ -13,6 +13,7 @@
 #include "OSScreenSaverTizen.h"
 #include "Registry.h"
 #include "Seat.h"
+#include "SeatTizen.h"
 #include "ShellSurfaceXdgShell.h"
 #include "settings/DisplaySettings.h"
 #include "settings/Settings.h"
@@ -181,9 +182,9 @@ std::unique_ptr<KODI::WINDOWING::IOSScreenSaver> CWinSystemWaylandTizen::GetOSSc
 std::unique_ptr<CSeat> CWinSystemWaylandTizen::CreateSeat(std::uint32_t name,
                                                           wayland::seat_t& seat)
 {
-  // Use standard CSeat implementation for Tizen
-  // Remote control input will be handled through standard Wayland input events
-  return std::make_unique<CSeat>(name, seat, *GetConnection());
+  // Use Tizen-specific seat implementation for remote control input handling
+  CLog::LogF(LOGINFO, "Creating Tizen seat for remote control input");
+  return std::make_unique<CSeatTizen>(name, seat, *GetConnection());
 }
 
 bool CWinSystemWaylandTizen::InitializeTizenDisplay()

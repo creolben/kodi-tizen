@@ -175,6 +175,52 @@ If dependencies fail to build:
 3. Try building with `--enable-debug=yes` for more verbose output
 4. Check that your Tizen SDK is up to date
 
+## Deployment and Debugging
+
+After building Kodi, you can deploy and debug on Tizen devices or emulators.
+
+### Physical Device Deployment
+
+See the [SDB Deployment Guide](SDB_DEPLOYMENT_GUIDE.md) for detailed instructions on:
+
+- Setting up SDB and connecting to devices
+- Deploying TPK packages
+- Viewing logs and debugging
+- Troubleshooting common issues
+
+Quick deployment:
+
+```bash
+# Deploy to connected device
+./tools/tizen/deploy.sh -u -l
+
+# View logs in real-time
+./tools/tizen/logs.sh -f
+```
+
+### Emulator Testing
+
+See the [Emulator Guide](EMULATOR_GUIDE.md) for detailed instructions on:
+
+- Installing and configuring the Tizen emulator
+- Building Kodi for x86 architecture
+- Deploying to emulator
+- Debugging and performance optimization
+
+Quick emulator deployment:
+
+```bash
+# Build for x86
+./tools/tizen/configure-tizen-x86.sh
+
+# Deploy to emulator
+./tools/tizen/deploy.sh -d emulator-26101 -u -l
+```
+
+### Developer Mode
+
+For unsigned TPK installation during development, see the [Developer Mode Guide](DEVELOPER_MODE_GUIDE.md).
+
 ## Next Steps
 
 After successfully building dependencies:
@@ -182,7 +228,7 @@ After successfully building dependencies:
 1. Configure Kodi itself using the built dependencies
 2. Build Kodi for Tizen
 3. Package as TPK
-4. Deploy to device or emulator
+4. Deploy to device or emulator using the deployment scripts
 
 See the main Kodi documentation for complete build instructions.
 

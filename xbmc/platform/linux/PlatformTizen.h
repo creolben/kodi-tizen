@@ -27,6 +27,24 @@ protected:
 public:
   bool IsConfigureAddonsAtStartupEnabled() override;
   void PlatformSyslog() override;
+  
+  // Storage space monitoring (Task 9.2)
+  bool CheckStorageSpace();
+  bool GetStorageInfo(unsigned long long& total, unsigned long long& available);
+  
+  // Network connectivity support (Task 10)
+  bool InitializeNetworkMonitoring();
+  void ShutdownNetworkMonitoring();
+  bool IsNetworkConnected();
+  std::string GetNetworkType();
+  
+  // POSIX networking verification (Task 10.2)
+  bool VerifyPOSIXNetworking();
+  bool TestDNSResolution(const std::string& hostname);
+  
+  // Wi-Fi information queries (Task 10.3)
+  bool GetWiFiInfo(std::string& ssid, std::string& ipAddress, int& signalStrength);
+  bool IsWiFiConnected();
 
 private:
   std::string GetHomePath();
@@ -44,9 +62,18 @@ private:
   void OnAppPause();
   void OnAppResume();
   
+  // Network connectivity callbacks (Task 10.1)
+  static void OnNetworkConnectionChanged(connection_type_e type, void* userData);
+  void HandleNetworkChange(connection_type_e type);
+  
 #if defined(TARGET_TIZEN)
   // Tizen-specific members for lifecycle handler references
   app_event_handler_h m_suspendedHandler;
   app_event_handler_h m_lowMemoryHandler;
+  
+  // Network monitoring members (Task 10.1)
+  connection_h m_connectionHandle;
+  bool m_networkConnected;
+  connection_type_e m_networkType;
 #endif
 };

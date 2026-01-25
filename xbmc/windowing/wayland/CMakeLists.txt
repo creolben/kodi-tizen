@@ -83,8 +83,10 @@ endif()
 
 if(TARGET_TIZEN)
   list(APPEND SOURCES OSScreenSaverTizen.cpp
+                      SeatTizen.cpp
                       WinSystemWaylandTizen.cpp)
   list(APPEND HEADERS OSScreenSaverTizen.h
+                      SeatTizen.h
                       WinSystemWaylandTizen.h)
 endif()
 

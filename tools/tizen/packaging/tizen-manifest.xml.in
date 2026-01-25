@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns="http://tizen.org/ns/packages" 
+          api-version="6.0" 
+          package="org.xbmc.kodi" 
+          version="@APP_VERSION@">
+    <author email="team@kodi.tv" href="https://kodi.tv">Team Kodi</author>
+    <description>Kodi Media Center - Open Source Home Theater Software</description>
+    <profile name="tv-samsung"/>
+    
+    <ui-application appid="org.xbmc.kodi" 
+                    exec="kodi-tizen" 
+                    type="capp" 
+                    multiple="false" 
+                    taskmanage="true" 
+                    nodisplay="false">
+        <label>Kodi</label>
+        <label xml:lang="en-us">Kodi</label>
+        <icon>kodi.png</icon>
+    </ui-application>
+    
+    <privileges>
+        <!-- Network access for streaming and remote content -->
+        <privilege>http://tizen.org/privilege/internet</privilege>
+        <privilege>http://tizen.org/privilege/network.get</privilege>
+        
+        <!-- Media playback and control -->
+        <privilege>http://tizen.org/privilege/mediacontroller.client</privilege>
+        <privilege>http://tizen.org/privilege/mediastorage</privilege>
+        
+        <!-- Volume control -->
+        <privilege>http://tizen.org/privilege/volume.set</privilege>
+        
+        <!-- Display and graphics -->
+        <privilege>http://tizen.org/privilege/display</privilege>
+        
+        <!-- Storage access -->
+        <privilege>http://tizen.org/privilege/externalstorage</privilege>
+        <privilege>http://tizen.org/privilege/externalstorage.appdata</privilege>
+        
+        <!-- Power management -->
+        <privilege>http://tizen.org/privilege/power</privilege>
+        
+        <!-- Application management -->
+        <privilege>http://tizen.org/privilege/appmanager.launch</privilege>
+    </privileges>
+    
+    <feature name="http://tizen.org/feature/screen.size.all">true</feature>
+    <feature name="http://tizen.org/feature/network.wifi">true</feature>
+    <feature name="http://tizen.org/feature/network.ethernet">true</feature>
+    <feature name="http://tizen.org/feature/multimedia.player">true</feature>
+    <feature name="http://tizen.org/feature/opengles.version.2_0">true</feature>
+</manifest>
