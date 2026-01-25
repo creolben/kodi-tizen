@@ -53,7 +53,7 @@
 
 #include <cstdlib>
 
-#ifndef TARGET_WEBOS
+#if !defined(TARGET_WEBOS) && !defined(TARGET_TIZEN)
 CPlatform* CPlatform::CreateInstance()
 {
   return new CPlatformLinux();

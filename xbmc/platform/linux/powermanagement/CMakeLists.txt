@@ -19,6 +19,11 @@ if (TARGET_WEBOS)
   list(APPEND HEADERS LunaPowerManagement.h)
 endif ()
 
+if (TARGET_TIZEN)
+  list(APPEND SOURCES TizenPowerManagement.cpp)
+  list(APPEND HEADERS TizenPowerManagement.h)
+endif ()
+
 if(SOURCES)
   core_add_library(platform_linux_powermanagement)
 endif()

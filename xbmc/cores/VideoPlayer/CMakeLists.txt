@@ -67,4 +67,9 @@ if("webos" IN_LIST CORE_PLATFORM_NAME_LC)
                         VideoPlayerWebOS.h)
 endif()
 
+if(TARGET_TIZEN)
+    list(APPEND SOURCES MediaPipelineTizen.cpp)
+    list(APPEND HEADERS MediaPipelineTizen.h)
+endif()
+
 core_add_library(VideoPlayer)

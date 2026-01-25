@@ -379,6 +379,39 @@ case $host in
     target_platform="webos"
     app_rendersystem="gles"
   ;;
+  arm-tizen-linux-gnueabi|i686-tizen-linux-gnu|x86_64-tizen-linux-gnu)
+    case $host in
+      arm-tizen-linux-gnueabi)
+        meson_cpu="arm"
+        if test "x$use_cpu" = "xauto"; then
+          use_cpu="armeabi-v7a"
+        fi
+        platform_cflags="-fPIC -DPIC -march=armv7-a -mfloat-abi=softfp -mfpu=neon -mtune=cortex-a9 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64"
+      ;;
+      i686-tizen-linux-gnu)
+        meson_cpu="x86"
+        if test "x$use_cpu" = "xauto"; then
+          use_cpu="i686"
+        fi
+        platform_cflags="-fPIC -DPIC -march=i686 -mtune=i686 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64"
+      ;;
+      x86_64-tizen-linux-gnu)
+        meson_cpu="x86_64"
+        if test "x$use_cpu" = "xauto"; then
+          use_cpu="x86_64"
+        fi
+        platform_cflags="-fPIC -DPIC -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64"
+      ;;
+    esac
+    use_toolchain="${use_toolchain:-/usr}"
+    platform_cxxflags="$platform_cflags -std=c++17"
+    optimize_flags="-Os"
+    platform_ldflags="-Wl,-rpath-link=$prefix/$deps_dir/lib"
+    platform_os="linux"
+    meson_system="linux"
+    target_platform="tizen"
+    app_rendersystem="gles"
+  ;;
   arm*-*-linux-gnu*|arm*-*-linux-uclibc*|aarch64*-*-linux-gnu*|aarch*-*-linux-be*)
     case $host in
       arm*-*-linux-gnu*|arm*-*-linux-uclibc*)
@@ -513,6 +546,8 @@ case $use_platform in
     ;;
   webos)
     ;;
+  tizen)
+    ;;
   auto)
     ;;
   *)
@@ -533,7 +568,8 @@ esac
 
 # Android NDK < 28 has issues with iconv when built with newer SDK
 # unsure why webos requires special handling
-if test "$platform_os" = "android" || test "$target_platform" = "webos"; then
+# Tizen also requires libiconv to be built
+if test "$platform_os" = "android" || test "$target_platform" = "webos" || test "$target_platform" = "tizen"; then
   need_libiconv=1
   ac_cv_search_iconv_open=-liconv
 else

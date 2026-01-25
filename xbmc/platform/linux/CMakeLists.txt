@@ -24,6 +24,14 @@ if(TARGET_WEBOS)
                       WebOSTVPlatformConfig.h)
 endif()
 
+if(TARGET_TIZEN)
+  list(APPEND SOURCES PlatformTizen.cpp
+                      utils/TizenInterfaceForCLog.cpp)
+  list(APPEND HEADERS PlatformTizen.h
+                      utils/TizenInterfaceForCLog.h
+                      utils/DlogSink.h)
+endif()
+
 if(TARGET ${APP_NAME_LC}::Alsa)
   list(APPEND SOURCES FDEventMonitor.cpp)
   list(APPEND HEADERS FDEventMonitor.h)

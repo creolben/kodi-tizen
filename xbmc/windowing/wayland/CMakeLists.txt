@@ -81,6 +81,13 @@ if(TARGET_WEBOS)
                       ${WAYLAND_EXTRA_PROTOCOL_GENERATED_DIR}/wayland-webos-protocols.hpp)
 endif()
 
+if(TARGET_TIZEN)
+  list(APPEND SOURCES OSScreenSaverTizen.cpp
+                      WinSystemWaylandTizen.cpp)
+  list(APPEND HEADERS OSScreenSaverTizen.h
+                      WinSystemWaylandTizen.h)
+endif()
+
 core_add_library(windowing_WAYLAND)
 
 if(PC_WAYLAND_PROTOCOLS_VERSION VERSION_GREATER_EQUAL 1.41)
