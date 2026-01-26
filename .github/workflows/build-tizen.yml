@@ -89,14 +89,22 @@ jobs:
           restore-keys: |
             kodi-deps-
       
+      - name: Patch for C++17 compatibility
+        run: |
+          # Patch configure.ac to use C++17 instead of C++20 for GCC 9.2 compatibility
+          sed -i 's/AX_CXX_COMPILE_STDCXX(\[20\]/AX_CXX_COMPILE_STDCXX([17]/' tools/depends/configure.ac
+          # Patch CMake to use C++17
+          sed -i 's/CMAKE_CXX_STANDARD 20/CMAKE_CXX_STANDARD 17/' cmake/scripts/common/CompilerSettings.cmake
+          # Verify patches
+          grep "AX_CXX_COMPILE_STDCXX" tools/depends/configure.ac
+          grep "CMAKE_CXX_STANDARD" cmake/scripts/common/CompilerSettings.cmake
+      
       - name: Build Kodi dependencies
         if: steps.cache-kodi-deps.outputs.cache-hit != 'true'
         run: |
           export PATH=$PATH:$HOME/tizen-studio/tools
           export TIZEN_SDK=$HOME/tizen-studio
           cd tools/depends
-          # Patch configure to use C++17 instead of C++20 for GCC 9.2 compatibility
-          sed -i 's/AX_CXX_COMPILE_STDCXX(\[20\]/AX_CXX_COMPILE_STDCXX([17]/' configure.ac
           ./bootstrap
           ./configure \
             --prefix=$HOME/kodi-tizen-deps \
@@ -111,8 +119,6 @@ jobs:
         run: |
           export PATH=$PATH:$HOME/tizen-studio/tools
           export TIZEN_SDK=$HOME/tizen-studio
-          # Patch CMake to use C++17 instead of C++20 for GCC 9.2 compatibility
-          sed -i 's/CMAKE_CXX_STANDARD 20/CMAKE_CXX_STANDARD 17/' cmake/scripts/common/CompilerSettings.cmake
           make -C tools/depends/target/cmakebuildsys
           cd build
           make -j$(nproc)
