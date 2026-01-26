@@ -275,27 +275,46 @@ jobs:
           head -50 Makefile.include
           
           # Create the native prefix directory structure
-          mkdir -p $HOME/kodi-tizen-deps/x86_64-linux-native/bin
-          mkdir -p $HOME/kodi-tizen-deps/x86_64-linux-native/lib
-          mkdir -p $HOME/kodi-tizen-deps/x86_64-linux-native/include
-          mkdir -p $HOME/kodi-tizen-deps/x86_64-linux-native/share
+          # Note: The path is x86_64-linux-gnu-native (with -gnu-)
+          NATIVE_PREFIX=$HOME/kodi-tizen-deps/x86_64-linux-gnu-native
+          mkdir -p $NATIVE_PREFIX/bin
+          mkdir -p $NATIVE_PREFIX/lib
+          mkdir -p $NATIVE_PREFIX/include
+          mkdir -p $NATIVE_PREFIX/share
+          mkdir -p $NATIVE_PREFIX/share/automake-1.16
           
           # Copy config.site to the native prefix
-          cp native/config.site.native $HOME/kodi-tizen-deps/x86_64-linux-native/share/config.site || true
+          cp native/config.site.native $NATIVE_PREFIX/share/config.site || true
           
           # Symlink system tools to native prefix
-          ln -sf $(which cmake) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/cmake
-          ln -sf $(which ninja) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/ninja
-          ln -sf $(which meson) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/meson
-          ln -sf $(which nasm) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/nasm
-          ln -sf $(which python3) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/python3
-          ln -sf $(which swig) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/swig
-          ln -sf $(which bison) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/bison
-          ln -sf $(which m4) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/m4
-          ln -sf $(which autoconf) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/autoconf
-          ln -sf $(which automake) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/automake
-          ln -sf $(which libtool) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/libtool
-          ln -sf $(which pkg-config) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/pkg-config
+          ln -sf $(which cmake) $NATIVE_PREFIX/bin/cmake
+          ln -sf $(which ninja) $NATIVE_PREFIX/bin/ninja
+          ln -sf $(which meson) $NATIVE_PREFIX/bin/meson
+          ln -sf $(which nasm) $NATIVE_PREFIX/bin/nasm
+          ln -sf $(which python3) $NATIVE_PREFIX/bin/python3
+          ln -sf $(which swig) $NATIVE_PREFIX/bin/swig
+          ln -sf $(which bison) $NATIVE_PREFIX/bin/bison
+          ln -sf $(which m4) $NATIVE_PREFIX/bin/m4
+          ln -sf $(which autoconf) $NATIVE_PREFIX/bin/autoconf
+          ln -sf $(which automake) $NATIVE_PREFIX/bin/automake
+          ln -sf $(which autoreconf) $NATIVE_PREFIX/bin/autoreconf
+          ln -sf $(which autoheader) $NATIVE_PREFIX/bin/autoheader
+          ln -sf $(which aclocal) $NATIVE_PREFIX/bin/aclocal
+          ln -sf $(which autom4te) $NATIVE_PREFIX/bin/autom4te
+          ln -sf $(which libtool) $NATIVE_PREFIX/bin/libtool
+          ln -sf $(which libtoolize) $NATIVE_PREFIX/bin/libtoolize
+          ln -sf $(which pkg-config) $NATIVE_PREFIX/bin/pkg-config
+          ln -sf $(which gettext) $NATIVE_PREFIX/bin/gettext || true
+          ln -sf $(which msgfmt) $NATIVE_PREFIX/bin/msgfmt || true
+          ln -sf $(which autopoint) $NATIVE_PREFIX/bin/autopoint || true
+          
+          # Copy automake data files
+          cp -r /usr/share/automake-*/* $NATIVE_PREFIX/share/automake-1.16/ 2>/dev/null || true
+          
+          # Verify cmake is accessible
+          echo "Verifying native tools:"
+          ls -la $NATIVE_PREFIX/bin/cmake
+          $NATIVE_PREFIX/bin/cmake --version
           
           # CRITICAL: Create the MAIN native/.installed marker file
           # This is what the root Makefile checks to skip native builds
