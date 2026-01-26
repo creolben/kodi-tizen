@@ -1,0 +1,100 @@
+make -C native
+make[1]: Entering directory '/workspace/tools/depends/native'
+make -C m4
+make -C cmake
+make -C gettext
+make -C gas-preprocessor
+make -C giflib
+make -C nasm
+make -C zlib
+make -C expat
+make -C libffi
+make -C pkg-config
+make -C perlmodule-parseyapp
+make[2]: Entering directory '/workspace/tools/depends/native/nasm'
+make[2]: Entering directory '/workspace/tools/depends/native/gas-preprocessor'
+make[2]: Entering directory '/workspace/tools/depends/native/giflib'
+mkdir -p /home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/bin
+make[2]: Entering directory '/workspace/tools/depends/native/gettext'
+make[2]: Entering directory '/workspace/tools/depends/native/zlib'
+make[2]: Entering directory '/workspace/tools/depends/native/cmake'
+make[2]: Entering directory '/workspace/tools/depends/native/perlmodule-parseyapp'
+download zlib-1.3.1.tar.xz attempt 1
+make[2]: Entering directory '/workspace/tools/depends/native/pkg-config'
+download nasm-2.15.05.tar.xz attempt 1
+cp gas-preprocessor.pl /home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/bin/gas-preprocessor.pl
+download giflib-5.2.2.tar.gz attempt 1
+download Parse-Yapp-1.21.tar.gz attempt 1
+make[2]: Entering directory '/workspace/tools/depends/native/m4'
+download gettext-0.22.4.tar.gz attempt 1
+download pkg-config-0.29.2.tar.gz attempt 1
+download cmake-3.31.7.tar.gz attempt 1
+make[2]: Entering directory '/workspace/tools/depends/native/libffi'
+make[2]: Entering directory '/workspace/tools/depends/native/expat'
+make[2]: Leaving directory '/workspace/tools/depends/native/gas-preprocessor'
+download m4-1.4.20.tar.xz attempt 1
+download libffi-3.2.1.tar.gz attempt 1
+download expat-2.7.3.tar.xz attempt 1
+rm -rf x86_64-linux-native/*; mkdir -p x86_64-linux-native
+rm -rf x86_64-linux-native/*; mkdir -p x86_64-linux-native
+rm -rf x86_64-linux-native; mkdir -p x86_64-linux-native
+cd x86_64-linux-native; /usr/bin/tar --strip-components=1 -xf /home/builder/kodi-tizen-deps/xbmc-tarballs/Parse-Yapp-1.21.tar.gz
+cd x86_64-linux-native; /usr/bin/tar --strip-components=1 -xf /home/builder/kodi-tizen-deps/xbmc-tarballs/nasm-2.15.05.tar.xz
+cd x86_64-linux-native; /usr/bin/tar --strip-components=1 -xf /home/builder/kodi-tizen-deps/xbmc-tarballs/libffi-3.2.1.tar.gz
+cd x86_64-linux-native; perl Makefile.PL PREFIX=/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native
+rm -rf x86_64-linux-native/*; mkdir -p x86_64-linux-native
+cd x86_64-linux-native; /usr/bin/tar --strip-components=1 -xf /home/builder/kodi-tizen-deps/xbmc-tarballs/expat-2.7.3.tar.xz
+cd x86_64-linux-native; CFLAGS="-fPIC" ./configure --prefix=/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native --disable-shared --disable-builddir
+Checking if your kit is complete...
+Looks good
+rm -rf x86_64-linux-native; mkdir -p x86_64-linux-native
+cd x86_64-linux-native; /usr/bin/tar --strip-components=1 -xf /home/builder/kodi-tizen-deps/xbmc-tarballs/giflib-5.2.2.tar.gz
+cd x86_64-linux-native; cp -f /home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/share/automake-1.18/config.sub /home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/share/automake-1.18/config.guess ./conftools; CFLAGS="-fPIC" ./configure --prefix=/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native --disable-shared
+cp: Generating a Unix-style Makefile
+Writing Makefile for Parse::Yapp
+Writing MYMETA.yml and MYMETA.json
+cannot stat '/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/share/automake-1.18/config.sub': No such file or directory
+cp: cannot stat '/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/share/automake-1.18/config.guess': No such file or directory
+cd x86_64-linux-native; make
+make[3]: Entering directory '/workspace/tools/depends/native/perlmodule-parseyapp/x86_64-linux-native'
+cd x86_64-linux-native; patch -p1 -i ../01-static-lib.patch
+rm -rf x86_64-linux-native/*; mkdir -p x86_64-linux-native
+patching file Makefile
+cd x86_64-linux-native; /usr/bin/tar --strip-components=1 -xf /home/builder/kodi-tizen-deps/xbmc-tarballs/pkg-config-0.29.2.tar.gz
+make -C x86_64-linux-native libgif.a CFLAGS="-I/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/include " LDFLAGS="-L/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/lib "
+make[3]: Entering directory '/workspace/tools/depends/native/giflib/x86_64-linux-native'
+rm -rf x86_64-linux-native; mkdir -p x86_64-linux-native
+cc -I/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/include    -c -o dgif_lib.o dgif_lib.c
+cc -I/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/include    -c -o egif_lib.o egif_lib.c
+cc -I/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/include    -c -o gifalloc.o gifalloc.c
+cc -I/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/include    -c -o gif_err.o gif_err.c
+cc -I/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/include    -c -o gif_font.o gif_font.c
+cc -I/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/include    -c -o gif_hash.o gif_hash.c
+cc -I/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/include    -c -o openbsd-reallocarray.o openbsd-reallocarray.c
+cp lib/Parse/Yapp/Options.pm blib/lib/Parse/Yapp/Options.pm
+cp lib/Parse/Yapp.pm blib/lib/Parse/Yapp.pm
+cp lib/Parse/Yapp/Lalr.pm blib/lib/Parse/Yapp/Lalr.pm
+cp lib/Parse/Yapp/Grammar.pm blib/lib/Parse/Yapp/Grammar.pm
+cp lib/Parse/Yapp/Driver.pm blib/lib/Parse/Yapp/Driver.pm
+cp lib/Parse/Yapp/Parse.pm blib/lib/Parse/Yapp/Parse.pm
+cp lib/Parse/Yapp/Output.pm blib/lib/Parse/Yapp/Output.pm
+cd x86_64-linux-native; /usr/bin/tar --strip-components=1 -xf /home/builder/kodi-tizen-deps/xbmc-tarballs/zlib-1.3.1.tar.xz
+cp yapp blib/script/yapp
+rm -rf x86_64-linux-native/*; mkdir -p x86_64-linux-native
+rm -rf x86_64-linux-native/*; mkdir -p x86_64-linux-native
+"/usr/bin/perl" -MExtUtils::MY -e 'MY->fixin(shift)' -- blib/script/yapp
+cd x86_64-linux-native; /usr/bin/tar --strip-components=1 -xf /home/builder/kodi-tizen-deps/xbmc-tarballs/cmake-3.31.7.tar.gz
+cd x86_64-linux-native; /usr/bin/tar --strip-components=1 -xf /home/builder/kodi-tizen-deps/xbmc-tarballs/m4-1.4.20.tar.xz
+cd x86_64-linux-native; ./configure --prefix=/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native
+cd x86_64-linux-native; CC="gcc" CFLAGS="-I/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/include " ./configure --prefix=/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native
+cd x86_64-linux-native; patch -p1 -i ../001-fix-gcc15-build.patch
+patching file glib/glib/goption.c
+cd x86_64-linux-native; ./configure --prefix=/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native --enable-indirect-deps --with-pc-path=/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/lib/pkgconfig:/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/share/pkgconfig --with-internal-glib
+ar rcs libgif.a dgif_lib.o egif_lib.o gifalloc.o gif_err.o gif_font.o gif_hash.o openbsd-reallocarray.o
+make[3]: Leaving directory '/workspace/tools/depends/native/giflib/x86_64-linux-native'
+make -C x86_64-linux-native install-include PREFIX="/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native"
+make[3]: Entering directory '/workspace/tools/depends/native/giflib/x86_64-linux-native'
+configure: loading site script /home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/share/config.site
+Manifying 1 pod document
+install -d "/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/include"
+install -m 644 gif_lib.h "/home/builder/kodi-tizen-deps/x86_64-linux-gnu-native/include"

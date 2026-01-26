@@ -1,0 +1,86 @@
+================================================================================
+                    INSTALL KODI TO SAMSUNG TV - QUICK START
+================================================================================
+
+PREREQUISITES:
+  ✓ Samsung TV (2020+)
+  ✓ TV and Mac on same Wi-Fi
+  ✓ Kodi TPK file (from build or GitHub Actions)
+
+================================================================================
+                            METHOD 1: AUTOMATED
+================================================================================
+
+./install-to-tv.sh
+
+Follow the prompts!
+
+================================================================================
+                            METHOD 2: MANUAL
+================================================================================
+
+1. ENABLE DEVELOPER MODE ON TV:
+   - Press Home on remote
+   - Go to Apps
+   - Press 1-2-3-4-5 quickly
+   - Toggle Developer Mode ON
+   - Enter your Mac's IP
+   - Restart TV
+
+2. FIND TV'S IP ADDRESS:
+   - TV Settings → Network → Network Status
+   - Note the IP (e.g., 192.168.1.100)
+
+3. CONNECT TO TV:
+   sdb connect <TV_IP>
+   sdb devices
+
+4. INSTALL KODI:
+   sdb install build/kodi-tizen-*.tpk
+
+5. LAUNCH KODI:
+   sdb shell app_launcher -s org.xbmc.kodi
+
+================================================================================
+                            TROUBLESHOOTING
+================================================================================
+
+CAN'T CONNECT:
+  - Verify Developer Mode is enabled
+  - Check TV and Mac are on same network
+  - Restart: sdb kill-server && sdb start-server
+
+SDB NOT FOUND:
+  export PATH=$PATH:$HOME/tizen-studio/tools
+
+INSTALL FAILS:
+  - Uninstall old version: sdb uninstall org.xbmc.kodi
+  - Check TV storage: sdb shell df -h
+  - Verify TPK file exists: ls -lh *.tpk
+
+KODI WON'T LAUNCH:
+  - Check logs: sdb dlog KODI:E
+  - Reinstall: sdb uninstall org.xbmc.kodi && sdb install *.tpk
+
+================================================================================
+                            USEFUL COMMANDS
+================================================================================
+
+Connect:        sdb connect <TV_IP>
+List devices:   sdb devices
+Install:        sdb install kodi-tizen-*.tpk
+Launch:         sdb shell app_launcher -s org.xbmc.kodi
+View logs:      sdb dlog KODI:V
+Uninstall:      sdb uninstall org.xbmc.kodi
+Disconnect:     sdb disconnect <TV_IP>
+
+================================================================================
+                            DOCUMENTATION
+================================================================================
+
+Complete Guide:     INSTALL_TO_TV.md
+Developer Mode:     tools/tizen/DEVELOPER_MODE_GUIDE.md
+TV Connection:      tools/tizen/TV_CONNECTION_GUIDE.md
+Testing:            TESTING_GUIDE.md
+
+================================================================================

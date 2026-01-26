@@ -1,0 +1,56 @@
+================================================================================
+                        IMPORTANT: READ THIS FIRST
+================================================================================
+
+You tried to run the command on your Mac, but it needs to run INSIDE the container!
+
+The container is still running. You need to go back to the container terminal.
+
+================================================================================
+                    STEP 1: Find Your Container Terminal
+================================================================================
+
+Look for the terminal window that shows:
+  root@78b72566c034:/workspace#
+
+That's your container terminal!
+
+================================================================================
+                    STEP 2: In That Container Terminal, Run:
+================================================================================
+
+chmod +x /workspace/container-build-as-root.sh && /workspace/container-build-as-root.sh
+
+================================================================================
+                    OR: If You Lost the Container Terminal
+================================================================================
+
+On your Mac, find the container and attach to it:
+
+1. Find container ID:
+   podman ps
+
+2. Attach to it:
+   podman exec -it <container_id> bash
+
+3. Then run the build command:
+   chmod +x /workspace/container-build-as-root.sh && /workspace/container-build-as-root.sh
+
+================================================================================
+                    ALTERNATIVE: Rebuild Container Properly
+================================================================================
+
+If you want to start fresh with a proper non-root container:
+
+1. Exit the current container (in container terminal, type: exit)
+
+2. On your Mac, rebuild:
+   ./rebuild-container.sh
+
+3. Start new container:
+   podman run --platform linux/amd64 -v $(pwd):/workspace:Z -it localhost/kodi-tizen-builder
+
+4. Inside new container:
+   chmod +x /workspace/container-build.sh && /workspace/container-build.sh
+
+================================================================================

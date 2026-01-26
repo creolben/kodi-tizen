@@ -39,18 +39,20 @@ echo ""
 
 # Create Containerfile (Podman's Dockerfile)
 cat > Containerfile.tizen <<'EOF'
-FROM ubuntu:22.04
+FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build dependencies
+# Install build dependencies including Python 3.8 (required by Tizen SDK)
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
     curl \
     git \
-    python3 \
+    python3.8 \
+    python3.8-dev \
     python3-pip \
+    libpython3.8 \
     autoconf \
     automake \
     libtool \
@@ -64,10 +66,18 @@ RUN apt-get update && apt-get install -y \
     nasm \
     yasm \
     libssl-dev \
+    sudo \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
-WORKDIR /workspace
+# Ensure python3 points to python3.8
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 1
+
+# Create a non-root user
+RUN useradd -m -s /bin/bash builder && \
+    echo "builder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+USER builder
+WORKDIR /home/builder
 
 # Default command
 CMD ["/bin/bash"]

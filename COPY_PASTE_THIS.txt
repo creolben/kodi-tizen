@@ -1,0 +1,28 @@
+================================================================================
+                    COPY AND PASTE THIS INTO YOUR CONTAINER
+================================================================================
+
+chmod +x /workspace/container-build-as-root.sh && /workspace/container-build-as-root.sh
+
+================================================================================
+                              THAT'S IT!
+================================================================================
+
+NOTE: This script creates a non-root user to run the Tizen SDK
+      (Tizen SDK refuses to run as root)
+
+The script will automatically:
+  ✓ Create non-root 'builder' user
+  ✓ Install Tizen SDK (~10 minutes)
+  ✓ Build dependencies (~30-60 minutes)
+  ✓ Build Kodi (~30-60 minutes)
+  ✓ Create TPK package (~5 minutes)
+
+Total time: 60-90 minutes
+
+You'll see colored progress output showing each step.
+
+When complete, type 'exit' to leave the container.
+The TPK file will be in your build/ directory on your Mac.
+
+================================================================================

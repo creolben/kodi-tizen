@@ -715,7 +715,7 @@ fi
 
 CXXFLAGS="$platform_cxxflags $platform_includes"
 CXX_CACHED="$CXX"
-AX_CXX_COMPILE_STDCXX([20], [noext], [mandatory])
+AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory])
 CXX="$CXX_CACHED"
 
 if test "$ffmpeg_options" = "default"; then
