@@ -290,38 +290,24 @@ jobs:
           echo "System cmake at: $CMAKE_PATH"
           
           # Create wrapper scripts instead of symlinks (more reliable)
-          cat > $NATIVE_PREFIX/bin/cmake << 'WRAPPER'
-#!/bin/bash
-exec /usr/bin/cmake "$@"
-WRAPPER
+          # Using printf to avoid heredoc YAML issues
+          printf '#!/bin/bash\nexec /usr/bin/cmake "$@"\n' > $NATIVE_PREFIX/bin/cmake
           chmod +x $NATIVE_PREFIX/bin/cmake
           
-          cat > $NATIVE_PREFIX/bin/ninja << 'WRAPPER'
-#!/bin/bash
-exec /usr/bin/ninja "$@"
-WRAPPER
+          printf '#!/bin/bash\nexec /usr/bin/ninja "$@"\n' > $NATIVE_PREFIX/bin/ninja
           chmod +x $NATIVE_PREFIX/bin/ninja
           
-          cat > $NATIVE_PREFIX/bin/make << 'WRAPPER'
-#!/bin/bash
-exec /usr/bin/make "$@"
-WRAPPER
+          printf '#!/bin/bash\nexec /usr/bin/make "$@"\n' > $NATIVE_PREFIX/bin/make
           chmod +x $NATIVE_PREFIX/bin/make
           
-          cat > $NATIVE_PREFIX/bin/meson << 'WRAPPER'
-#!/bin/bash
-exec /usr/bin/meson "$@"
-WRAPPER
+          printf '#!/bin/bash\nexec /usr/bin/meson "$@"\n' > $NATIVE_PREFIX/bin/meson
           chmod +x $NATIVE_PREFIX/bin/meson
           
           # Create wrapper scripts for other tools
           for tool in nasm python3 swig bison m4 autoconf automake autoreconf autoheader aclocal autom4te libtool libtoolize pkg-config gettext msgfmt autopoint msgmerge xgettext; do
             TOOL_PATH=$(which $tool 2>/dev/null)
             if [ -n "$TOOL_PATH" ]; then
-              cat > $NATIVE_PREFIX/bin/$tool << WRAPPER
-#!/bin/bash
-exec $TOOL_PATH "\$@"
-WRAPPER
+              printf '#!/bin/bash\nexec %s "$@"\n' "$TOOL_PATH" > $NATIVE_PREFIX/bin/$tool
               chmod +x $NATIVE_PREFIX/bin/$tool
             fi
           done
