@@ -184,6 +184,12 @@ jobs:
           
           cd tools/depends
           ./bootstrap
+          
+          # Skip building native CMake - use system CMake instead
+          # Create a dummy .installed file to skip CMake build
+          mkdir -p native/cmake
+          touch native/cmake/.installed-x86_64-linux-native
+          
           ./configure \
             --prefix=$HOME/kodi-tizen-deps \
             --host=arm-tizen-linux-gnueabi \
