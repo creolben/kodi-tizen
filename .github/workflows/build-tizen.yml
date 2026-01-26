@@ -168,11 +168,17 @@ jobs:
           echo "Testing C++17 support..."
           $CXX -std=c++17 -x c++ -c - -o /dev/null <<< "int main() { return 0; }" && echo "✓ C++17 works!" || echo "✗ C++17 failed"
           
+          # Verify we're using the symlinked compiler (important for platform detection)
+          echo "Compiler being used:"
+          which arm-linux-gnueabi-gcc
+          arm-linux-gnueabi-gcc --version
+          
           cd tools/depends
           ./bootstrap
           ./configure \
             --prefix=$HOME/kodi-tizen-deps \
             --host=arm-tizen-linux-gnueabi \
+            --build=x86_64-linux-gnu \
             --with-toolchain=$HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2 \
             --with-platform=tizen \
             --with-rendersystem=gles \
