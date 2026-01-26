@@ -284,6 +284,10 @@ jobs:
           echo "=== Generated Makefile.include (first 100 lines) ==="
           head -100 Makefile.include
           
+          # Save config.log for debugging
+          cp config.log $GITHUB_WORKSPACE/build-logs/configure-config.log || true
+          cp Makefile.include $GITHUB_WORKSPACE/build-logs/Makefile.include || true
+          
           echo "=== CHECKPOINT 1: Configure completed ==="
           
           # Create the native prefix directory structure
