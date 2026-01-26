@@ -154,6 +154,38 @@ jobs:
           echo "=== Patched CompilerSettings.cmake ==="
           grep "CMAKE_CXX_STANDARD" cmake/scripts/common/CompilerSettings.cmake
       
+      - name: Install additional native build dependencies
+        run: |
+          # Install all native tools that Kodi's build system would otherwise compile
+          sudo apt-get install -y \
+            gettext \
+            swig \
+            default-jdk \
+            liblzo2-dev \
+            libgif-dev \
+            libjpeg-dev \
+            libpng-dev \
+            libpcre2-dev \
+            libexpat1-dev \
+            libwayland-dev \
+            wayland-protocols \
+            libffi-dev \
+            ninja-build \
+            meson \
+            python3-mako \
+            python3-markupsafe \
+            python3-pybind11 \
+            python3-setuptools \
+            texinfo \
+            bison \
+            flex
+          
+          # Verify key tools
+          echo "CMake: $(cmake --version | head -1)"
+          echo "Ninja: $(ninja --version)"
+          echo "Meson: $(meson --version)"
+          echo "Python: $(python3 --version)"
+      
       - name: Build Kodi dependencies
         if: steps.cache-kodi-deps.outputs.cache-hit != 'true'
         run: |
@@ -170,6 +202,11 @@ jobs:
           export CMAKE=$(which cmake)
           export CMAKE_FOR_BUILD=$(which cmake)
           
+          # Use system native tools
+          export CC_FOR_BUILD=gcc
+          export CXX_FOR_BUILD=g++
+          export LD_FOR_BUILD=ld
+          
           # Test compiler with C++17
           echo "Testing C++17 support..."
           $CXX -std=c++17 -x c++ -c - -o /dev/null <<< "int main() { return 0; }" && echo "✓ C++17 works!" || echo "✗ C++17 failed"
@@ -184,12 +221,6 @@ jobs:
           
           cd tools/depends
           ./bootstrap
-          
-          # Skip building native CMake - use system CMake instead
-          # Create a dummy .installed file to skip CMake build
-          mkdir -p native/cmake
-          touch native/cmake/.installed-x86_64-linux-native
-          
           ./configure \
             --prefix=$HOME/kodi-tizen-deps \
             --host=arm-tizen-linux-gnueabi \
@@ -206,7 +237,27 @@ jobs:
             CFLAGS="$CFLAGS" \
             CMAKE="$CMAKE" \
             CMAKE_FOR_BUILD="$CMAKE_FOR_BUILD"
-          make -j$(nproc)
+          
+          # Create the native prefix directory structure
+          mkdir -p $HOME/kodi-tizen-deps/x86_64-linux-native/bin
+          mkdir -p $HOME/kodi-tizen-deps/x86_64-linux-native/lib
+          mkdir -p $HOME/kodi-tizen-deps/x86_64-linux-native/include
+          mkdir -p $HOME/kodi-tizen-deps/x86_64-linux-native/share
+          
+          # Copy config.site to the native prefix
+          cp native/config.site.native $HOME/kodi-tizen-deps/x86_64-linux-native/share/config.site || true
+          
+          # Symlink system cmake to native prefix
+          ln -sf $(which cmake) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/cmake
+          
+          # Create .installed markers for native tools we're using from system
+          for tool in cmake ninja meson; do
+            mkdir -p native/$tool
+            touch native/$tool/.installed-x86_64-linux-native
+          done
+          
+          # Build only target dependencies (skip native)
+          make -C target -j$(nproc) || make -j$(nproc)
       
       - name: Build Kodi
         run: |
