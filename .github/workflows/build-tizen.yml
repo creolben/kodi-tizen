@@ -315,10 +315,17 @@ jobs:
           
           # Copy automake data files (version 1.16 on Ubuntu 22.04)
           # But create symlinks for both 1.16 and 1.18 since Makefile.include expects 1.18
-          AUTOMAKE_VER=$(automake --version | head -1 | grep -oP '\d+\.\d+')
+          AUTOMAKE_VER=$(automake --version | head -1 | sed 's/.*) //' | cut -d. -f1-2)
           echo "System automake version: $AUTOMAKE_VER"
-          cp -r /usr/share/automake-$AUTOMAKE_VER/* $NATIVE_PREFIX/share/automake-1.18/ 2>/dev/null || \
-          cp -r /usr/share/automake-*/* $NATIVE_PREFIX/share/automake-1.18/ 2>/dev/null || true
+          if [ -d "/usr/share/automake-$AUTOMAKE_VER" ]; then
+            cp -r /usr/share/automake-$AUTOMAKE_VER/* $NATIVE_PREFIX/share/automake-1.18/ 2>/dev/null || true
+          else
+            # Fallback: find any automake directory
+            AUTOMAKE_DIR=$(ls -d /usr/share/automake-* 2>/dev/null | head -1)
+            if [ -n "$AUTOMAKE_DIR" ]; then
+              cp -r $AUTOMAKE_DIR/* $NATIVE_PREFIX/share/automake-1.18/ 2>/dev/null || true
+            fi
+          fi
           
           # Copy aclocal files
           cp -r /usr/share/aclocal/* $NATIVE_PREFIX/share/aclocal/ 2>/dev/null || true
