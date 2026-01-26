@@ -278,8 +278,10 @@ jobs:
             }
           
           # Show the generated Makefile.include to verify settings
-          echo "=== Generated Makefile.include (first 50 lines) ==="
-          head -50 Makefile.include
+          echo "=== Generated Makefile.include (first 100 lines) ==="
+          head -100 Makefile.include
+          
+          echo "=== CHECKPOINT 1: Configure completed ==="
           
           # Create the native prefix directory structure
           # Note: The path is x86_64-linux-native (build_cpu-build_os-native)
@@ -294,6 +296,8 @@ jobs:
           
           # Copy config.site to the native prefix
           cp native/config.site.native $NATIVE_PREFIX/share/config.site || true
+          
+          echo "=== CHECKPOINT 2: Native prefix created ==="
           
           # CRITICAL: Copy actual binaries instead of symlinks for cmake
           # Symlinks can fail in some build contexts
@@ -348,6 +352,7 @@ jobs:
           ls -la $NATIVE_PREFIX/share/automake-1.18/ 2>/dev/null | head -10 || echo "No automake files found"
           
           # Verify cmake is accessible and works
+          echo "=== CHECKPOINT 3: Wrapper scripts created ==="
           echo "Verifying native tools:"
           ls -la $NATIVE_PREFIX/bin/cmake
           echo "Testing cmake wrapper:"
@@ -361,6 +366,8 @@ jobs:
           # CRITICAL: Create the MAIN native/.installed marker file
           # This is what the root Makefile checks to skip native builds
           touch native/.installed-x86_64-linux-native
+          
+          echo "=== CHECKPOINT 4: Native marker created ==="
           
           # Verify the marker file exists
           echo "Native marker file created:"
@@ -377,6 +384,8 @@ jobs:
           # Ensure native prefix is in PATH for cmake and other tools
           export PATH=$NATIVE_PREFIX/bin:$PATH
           echo "Building target dependencies with PATH=$PATH"
+          
+          echo "=== CHECKPOINT 5: Starting make ==="
           
           # Run make with verbose output and capture errors
           set +e
