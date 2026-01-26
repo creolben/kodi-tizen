@@ -356,7 +356,25 @@ jobs:
           # Ensure native prefix is in PATH for cmake and other tools
           export PATH=$NATIVE_PREFIX/bin:$PATH
           echo "Building target dependencies with PATH=$PATH"
-          make -C target -j$(nproc) V=1 2>&1 | tail -500
+          
+          # Run make with verbose output and capture errors
+          set +e
+          make -C target -j$(nproc) V=1 2>&1 | tee /tmp/build.log
+          BUILD_EXIT_CODE=${PIPESTATUS[0]}
+          set -e
+          
+          if [ $BUILD_EXIT_CODE -ne 0 ]; then
+            echo "=== BUILD FAILED ==="
+            echo "Last 200 lines of build log:"
+            tail -200 /tmp/build.log
+            echo ""
+            echo "=== Checking for config.log files ==="
+            find . -name "config.log" -exec echo "=== {} ===" \; -exec tail -50 {} \; 2>/dev/null || true
+            echo ""
+            echo "=== Checking cmake errors ==="
+            find . -name "CMakeError.log" -exec echo "=== {} ===" \; -exec cat {} \; 2>/dev/null || true
+            exit $BUILD_EXIT_CODE
+          fi
       
       - name: Build Kodi
         run: |
