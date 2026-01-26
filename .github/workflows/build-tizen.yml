@@ -247,17 +247,31 @@ jobs:
           # Copy config.site to the native prefix
           cp native/config.site.native $HOME/kodi-tizen-deps/x86_64-linux-native/share/config.site || true
           
-          # Symlink system cmake to native prefix
+          # Symlink system tools to native prefix
           ln -sf $(which cmake) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/cmake
+          ln -sf $(which ninja) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/ninja
+          ln -sf $(which meson) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/meson
+          ln -sf $(which nasm) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/nasm
+          ln -sf $(which python3) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/python3
+          ln -sf $(which swig) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/swig
+          ln -sf $(which bison) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/bison
+          ln -sf $(which m4) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/m4
+          ln -sf $(which autoconf) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/autoconf
+          ln -sf $(which automake) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/automake
+          ln -sf $(which libtool) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/libtool
+          ln -sf $(which pkg-config) $HOME/kodi-tizen-deps/x86_64-linux-native/bin/pkg-config
           
-          # Create .installed markers for native tools we're using from system
-          for tool in cmake ninja meson; do
-            mkdir -p native/$tool
-            touch native/$tool/.installed-x86_64-linux-native
-          done
+          # CRITICAL: Create the MAIN native/.installed marker file
+          # This is what the root Makefile checks to skip native builds
+          touch native/.installed-x86_64-linux-native
           
-          # Build only target dependencies (skip native)
-          make -C target -j$(nproc) || make -j$(nproc)
+          # Verify the marker file exists
+          echo "Native marker file created:"
+          ls -la native/.installed-x86_64-linux-native
+          
+          # Now build only target dependencies
+          # The native/.installed file tells make that native deps are done
+          make -C target -j$(nproc)
       
       - name: Build Kodi
         run: |
