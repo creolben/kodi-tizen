@@ -137,8 +137,19 @@ jobs:
           sed -i 's/AX_CXX_COMPILE_STDCXX(\[20\]/AX_CXX_COMPILE_STDCXX([17]/' tools/depends/configure.ac
           # Patch CMake to use C++17
           sed -i 's/CMAKE_CXX_STANDARD 20/CMAKE_CXX_STANDARD 17/' cmake/scripts/common/CompilerSettings.cmake
+          
+          # Fix the m4 macro to use correct C++17 flag
+          # The AX_CXX_COMPILE_STDCXX macro might be using old syntax
+          if [ -f "tools/depends/m4/ax_cxx_compile_stdcxx.m4" ]; then
+            # Update the macro to recognize modern GCC C++17 support
+            sed -i 's/-std:c++1z/-std=c++17/g' tools/depends/m4/ax_cxx_compile_stdcxx.m4
+            sed -i 's/-std:c++17/-std=c++17/g' tools/depends/m4/ax_cxx_compile_stdcxx.m4
+          fi
+          
           # Verify patches
+          echo "=== Patched configure.ac ==="
           grep "AX_CXX_COMPILE_STDCXX" tools/depends/configure.ac
+          echo "=== Patched CompilerSettings.cmake ==="
           grep "CMAKE_CXX_STANDARD" cmake/scripts/common/CompilerSettings.cmake
       
       - name: Build Kodi dependencies
@@ -150,6 +161,13 @@ jobs:
           export CXX=$HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin/arm-linux-gnueabi-g++
           export AR=$HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin/arm-linux-gnueabi-ar
           export RANLIB=$HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin/arm-linux-gnueabi-ranlib
+          export CXXFLAGS="-std=c++17"
+          export CFLAGS="-O2"
+          
+          # Test compiler with C++17
+          echo "Testing C++17 support..."
+          $CXX -std=c++17 -x c++ -c - -o /dev/null <<< "int main() { return 0; }" && echo "✓ C++17 works!" || echo "✗ C++17 failed"
+          
           cd tools/depends
           ./bootstrap
           ./configure \
@@ -162,7 +180,9 @@ jobs:
             CC="$CC" \
             CXX="$CXX" \
             AR="$AR" \
-            RANLIB="$RANLIB"
+            RANLIB="$RANLIB" \
+            CXXFLAGS="$CXXFLAGS" \
+            CFLAGS="$CFLAGS"
           make -j$(nproc)
       
       - name: Build Kodi
