@@ -56,6 +56,10 @@ jobs:
             nasm \
             yasm \
             libssl-dev
+          
+          # Verify CMake is available
+          cmake --version
+          which cmake
       
       - name: Cache Tizen SDK
         id: cache-tizen-sdk
@@ -160,6 +164,10 @@ jobs:
           export CXXFLAGS="-std=c++17"
           export CFLAGS="-O2"
           
+          # Use system CMake instead of building it
+          export CMAKE=$(which cmake)
+          export CMAKE_FOR_BUILD=$(which cmake)
+          
           # Test compiler with C++17
           echo "Testing C++17 support..."
           $CXX -std=c++17 -x c++ -c - -o /dev/null <<< "int main() { return 0; }" && echo "✓ C++17 works!" || echo "✗ C++17 failed"
@@ -168,6 +176,9 @@ jobs:
           echo "Compiler being used:"
           which arm-linux-gnueabi-gcc
           arm-linux-gnueabi-gcc --version
+          
+          echo "CMake being used:"
+          $CMAKE --version
           
           cd tools/depends
           ./bootstrap
@@ -184,7 +195,9 @@ jobs:
             AR="$AR" \
             RANLIB="$RANLIB" \
             CXXFLAGS="$CXXFLAGS" \
-            CFLAGS="$CFLAGS"
+            CFLAGS="$CFLAGS" \
+            CMAKE="$CMAKE" \
+            CMAKE_FOR_BUILD="$CMAKE_FOR_BUILD"
           make -j$(nproc)
       
       - name: Build Kodi
