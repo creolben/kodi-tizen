@@ -246,6 +246,9 @@ jobs:
           
           cd tools/depends
           ./bootstrap
+          
+          # Run configure and capture output
+          echo "=== Running configure ==="
           ./configure \
             --prefix=$HOME/kodi-tizen-deps \
             --host=arm-tizen-linux-gnueabi \
@@ -267,7 +270,12 @@ jobs:
             CXXFLAGS="$CXXFLAGS" \
             CFLAGS="$CFLAGS" \
             CMAKE="$CMAKE" \
-            CMAKE_FOR_BUILD="$CMAKE_FOR_BUILD"
+            CMAKE_FOR_BUILD="$CMAKE_FOR_BUILD" 2>&1 || {
+              echo "=== Configure failed! ==="
+              echo "=== config.log ==="
+              cat config.log || true
+              exit 1
+            }
           
           # Show the generated Makefile.include to verify settings
           echo "=== Generated Makefile.include (first 50 lines) ==="
