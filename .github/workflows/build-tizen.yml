@@ -16,7 +16,7 @@ on:
 jobs:
   build-tizen:
     name: Build Tizen TPK
-    runs-on: ubuntu-20.04  # Use 20.04 for better Tizen SDK compatibility
+    runs-on: ubuntu-22.04  # Use 22.04 for better availability and performance
     
     steps:
       - name: Checkout code
