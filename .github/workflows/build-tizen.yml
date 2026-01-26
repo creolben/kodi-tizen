@@ -90,9 +90,9 @@ jobs:
             PLATFORM-6.0-NativeAppDevelopment-CLI || true
           
           # Check if Tizen toolchain installed
-          if [ -d "$HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin" ]; then
+          if [ -d "$HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin" ] && \
+             [ -f "$HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin/arm-linux-gnueabi-gcc" ]; then
             echo "✓ Tizen toolchain installed successfully"
-            export TOOLCHAIN_PATH="$HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2"
           else
             echo "⚠ Tizen toolchain not available, using alternative ARM GCC"
             
@@ -106,27 +106,43 @@ jobs:
             mkdir -p $HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin
             cd $HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin
             
-            # Create symlinks with Tizen naming convention
-            ln -s /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabi-gcc
-            ln -s /usr/bin/arm-linux-gnueabihf-g++ arm-linux-gnueabi-g++
-            ln -s /usr/bin/arm-linux-gnueabihf-ar arm-linux-gnueabi-ar
-            ln -s /usr/bin/arm-linux-gnueabihf-ranlib arm-linux-gnueabi-ranlib
-            ln -s /usr/bin/arm-linux-gnueabihf-ld arm-linux-gnueabi-ld
-            ln -s /usr/bin/arm-linux-gnueabihf-as arm-linux-gnueabi-as
-            ln -s /usr/bin/arm-linux-gnueabihf-nm arm-linux-gnueabi-nm
-            ln -s /usr/bin/arm-linux-gnueabihf-objdump arm-linux-gnueabi-objdump
-            ln -s /usr/bin/arm-linux-gnueabihf-strip arm-linux-gnueabi-strip
+            # Create symlinks with BOTH naming conventions
+            # Standard arm-linux-gnueabi-* names
+            ln -sf /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabi-gcc
+            ln -sf /usr/bin/arm-linux-gnueabihf-g++ arm-linux-gnueabi-g++
+            ln -sf /usr/bin/arm-linux-gnueabihf-ar arm-linux-gnueabi-ar
+            ln -sf /usr/bin/arm-linux-gnueabihf-ranlib arm-linux-gnueabi-ranlib
+            ln -sf /usr/bin/arm-linux-gnueabihf-ld arm-linux-gnueabi-ld
+            ln -sf /usr/bin/arm-linux-gnueabihf-as arm-linux-gnueabi-as
+            ln -sf /usr/bin/arm-linux-gnueabihf-nm arm-linux-gnueabi-nm
+            ln -sf /usr/bin/arm-linux-gnueabihf-objdump arm-linux-gnueabi-objdump
+            ln -sf /usr/bin/arm-linux-gnueabihf-strip arm-linux-gnueabi-strip
+            ln -sf /usr/bin/arm-linux-gnueabihf-readelf arm-linux-gnueabi-readelf
+            
+            # ALSO create arm-tizen-linux-gnueabi-* names (for host triplet matching)
+            ln -sf /usr/bin/arm-linux-gnueabihf-gcc arm-tizen-linux-gnueabi-gcc
+            ln -sf /usr/bin/arm-linux-gnueabihf-g++ arm-tizen-linux-gnueabi-g++
+            ln -sf /usr/bin/arm-linux-gnueabihf-ar arm-tizen-linux-gnueabi-ar
+            ln -sf /usr/bin/arm-linux-gnueabihf-ranlib arm-tizen-linux-gnueabi-ranlib
+            ln -sf /usr/bin/arm-linux-gnueabihf-ld arm-tizen-linux-gnueabi-ld
+            ln -sf /usr/bin/arm-linux-gnueabihf-as arm-tizen-linux-gnueabi-as
+            ln -sf /usr/bin/arm-linux-gnueabihf-nm arm-tizen-linux-gnueabi-nm
+            ln -sf /usr/bin/arm-linux-gnueabihf-objdump arm-tizen-linux-gnueabi-objdump
+            ln -sf /usr/bin/arm-linux-gnueabihf-strip arm-tizen-linux-gnueabi-strip
+            ln -sf /usr/bin/arm-linux-gnueabihf-readelf arm-tizen-linux-gnueabi-readelf
             
             echo "✓ Alternative ARM toolchain configured"
-            export TOOLCHAIN_PATH="$HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2"
           fi
           
           # Verify toolchain is now available
           echo "Toolchain binaries:"
           ls -la $HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin/
           echo ""
-          echo "GCC version:"
+          echo "GCC version (arm-linux-gnueabi):"
           $HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin/arm-linux-gnueabi-gcc --version
+          echo ""
+          echo "GCC version (arm-tizen-linux-gnueabi):"
+          $HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin/arm-tizen-linux-gnueabi-gcc --version
       
       - name: Cache Kodi dependencies
         id: cache-kodi-deps
@@ -189,12 +205,22 @@ jobs:
       - name: Build Kodi dependencies
         if: steps.cache-kodi-deps.outputs.cache-hit != 'true'
         run: |
-          export PATH=$HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin:$PATH
+          TOOLCHAIN_DIR=$HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2
+          export PATH=$TOOLCHAIN_DIR/bin:$PATH
           export TIZEN_SDK=$HOME/tizen-studio
-          export CC=$HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin/arm-linux-gnueabi-gcc
-          export CXX=$HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin/arm-linux-gnueabi-g++
-          export AR=$HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin/arm-linux-gnueabi-ar
-          export RANLIB=$HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin/arm-linux-gnueabi-ranlib
+          
+          # Use the arm-tizen-linux-gnueabi-* compilers (matches host triplet)
+          export CC=$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-gcc
+          export CXX=$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-g++
+          export AR=$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-ar
+          export RANLIB=$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-ranlib
+          export LD=$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-ld
+          export AS=$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-as
+          export NM=$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-nm
+          export STRIP=$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-strip
+          export READELF=$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-readelf
+          export OBJDUMP=$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-objdump
+          
           export CXXFLAGS="-std=c++17"
           export CFLAGS="-O2"
           
@@ -211,10 +237,10 @@ jobs:
           echo "Testing C++17 support..."
           $CXX -std=c++17 -x c++ -c - -o /dev/null <<< "int main() { return 0; }" && echo "✓ C++17 works!" || echo "✗ C++17 failed"
           
-          # Verify we're using the symlinked compiler (important for platform detection)
+          # Verify we're using the correct compiler
           echo "Compiler being used:"
-          which arm-linux-gnueabi-gcc
-          arm-linux-gnueabi-gcc --version
+          echo "CC=$CC"
+          $CC --version
           
           echo "CMake being used:"
           $CMAKE --version
@@ -225,7 +251,7 @@ jobs:
             --prefix=$HOME/kodi-tizen-deps \
             --host=arm-tizen-linux-gnueabi \
             --build=x86_64-linux-gnu \
-            --with-toolchain=$HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2 \
+            --with-toolchain=$TOOLCHAIN_DIR \
             --with-platform=tizen \
             --with-rendersystem=gles \
             --enable-debug=no \
@@ -233,10 +259,20 @@ jobs:
             CXX="$CXX" \
             AR="$AR" \
             RANLIB="$RANLIB" \
+            LD="$LD" \
+            AS="$AS" \
+            NM="$NM" \
+            STRIP="$STRIP" \
+            READELF="$READELF" \
+            OBJDUMP="$OBJDUMP" \
             CXXFLAGS="$CXXFLAGS" \
             CFLAGS="$CFLAGS" \
             CMAKE="$CMAKE" \
             CMAKE_FOR_BUILD="$CMAKE_FOR_BUILD"
+          
+          # Show the generated Makefile.include to verify settings
+          echo "=== Generated Makefile.include (first 50 lines) ==="
+          head -50 Makefile.include
           
           # Create the native prefix directory structure
           mkdir -p $HOME/kodi-tizen-deps/x86_64-linux-native/bin
