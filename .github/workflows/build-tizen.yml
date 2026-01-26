@@ -62,15 +62,19 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/tizen-studio
-          key: tizen-sdk-5.0-${{ runner.os }}
+          key: tizen-sdk-6.1-${{ runner.os }}
       
       - name: Download and install Tizen SDK
         if: steps.cache-tizen-sdk.outputs.cache-hit != 'true'
         run: |
           cd /tmp
+          # Try Tizen Studio 6.1 first, fallback to 5.0 if not available
+          wget http://download.tizen.org/sdk/Installer/tizen-studio_6.1/web-cli_Tizen_Studio_6.1_ubuntu-64.bin || \
           wget http://download.tizen.org/sdk/Installer/tizen-studio_5.0/web-cli_Tizen_Studio_5.0_ubuntu-64.bin
-          chmod +x web-cli_Tizen_Studio_5.0_ubuntu-64.bin
-          ./web-cli_Tizen_Studio_5.0_ubuntu-64.bin --accept-license $HOME/tizen-studio
+          
+          # Install whichever version was downloaded
+          chmod +x web-cli_Tizen_Studio_*.bin
+          ./web-cli_Tizen_Studio_*.bin --accept-license $HOME/tizen-studio
       
       - name: Install Tizen packages
         run: |

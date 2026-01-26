@@ -7,11 +7,16 @@
 - ✅ GitHub Actions workflow exists with C++17 patches built-in
 - ✅ Workflow will work without committing local changes
 - ✅ Local container has Tizen SDK installed
+- ✅ Build system correctly configured (no .gbs.conf needed)
+- ✅ Tizen target properly defined in configure.ac
 
 **Issues:**
 - ⚠️ GitHub Actions workflow stuck in queue (11+ hours)
 - ⚠️ Local container build stalled with zombie processes
 - ⚠️ Local C++17 patches not committed (but not needed for GitHub Actions)
+
+**Note on GBS:**
+We're using Kodi's standard build system (autotools/CMake), not Tizen's GBS (Git Build System). GBS is for building Tizen platform packages (RPM), not applications (TPK). Our build system is correctly configured for Tizen application development. See `GBS_VS_STANDARD_BUILD.md` for details.
 
 ## Recommended Solution: GitHub Actions
 
