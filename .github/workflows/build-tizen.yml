@@ -272,8 +272,9 @@ jobs:
           head -50 Makefile.include
           
           # Create the native prefix directory structure
-          # Note: The path is x86_64-linux-gnu-native (with -gnu-)
-          NATIVE_PREFIX=$HOME/kodi-tizen-deps/x86_64-linux-gnu-native
+          # Note: The path is x86_64-linux-native (build_cpu-build_os-native)
+          # build_os is "linux" not "linux-gnu" per configure.ac
+          NATIVE_PREFIX=$HOME/kodi-tizen-deps/x86_64-linux-native
           mkdir -p $NATIVE_PREFIX/bin
           mkdir -p $NATIVE_PREFIX/lib
           mkdir -p $NATIVE_PREFIX/include
