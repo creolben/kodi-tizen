@@ -1,11 +1,9 @@
 name: Build Kodi for Tizen (Native Toolchain)
 
+# DISABLED: This workflow uses hard-float (gnueabihf) which is incompatible with Tizen
+# Use build-tizen.yml instead which uses soft-float (gnueabi)
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
-  workflow_dispatch:
+  workflow_dispatch:  # Only manual trigger
 
 jobs:
   build-tizen:

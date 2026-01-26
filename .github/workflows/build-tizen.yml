@@ -3,12 +3,6 @@ name: Build Kodi for Tizen
 on:
   push:
     branches: [ main, master ]
-    paths:
-      - 'xbmc/**'
-      - 'cmake/**'
-      - 'tools/depends/**'
-      - 'CMakeLists.txt'
-      - '.github/workflows/build-tizen.yml'
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:  # Allows manual trigger from Actions tab
