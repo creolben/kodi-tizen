@@ -202,7 +202,10 @@ jobs:
       - name: Build Kodi dependencies
         if: steps.cache-kodi-deps.outputs.cache-hit != 'true'
         run: |
-          set -x  # Enable debug output
+          set -ex  # Enable debug output and exit on error
+          
+          # Create build-logs directory early
+          mkdir -p $GITHUB_WORKSPACE/build-logs
           
           TOOLCHAIN_DIR=$HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2
           export PATH=$TOOLCHAIN_DIR/bin:$PATH
@@ -234,7 +237,7 @@ jobs:
           
           # Test compiler with C++17
           echo "Testing C++17 support..."
-          $CXX -std=c++17 -x c++ -c - -o /dev/null <<< "int main() { return 0; }" && echo "✓ C++17 works!" || echo "✗ C++17 failed"
+          echo "int main() { return 0; }" | $CXX -std=c++17 -x c++ -c - -o /dev/null && echo "✓ C++17 works!" || echo "✗ C++17 failed"
           
           # Verify we're using the correct compiler
           echo "Compiler being used:"
