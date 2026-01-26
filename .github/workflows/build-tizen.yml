@@ -394,8 +394,24 @@ jobs:
             echo ""
             echo "=== Checking cmake errors ==="
             find . -name "CMakeError.log" -exec echo "=== {} ===" \; -exec cat {} \; 2>/dev/null || true
+            
+            # Copy logs to workspace for artifact upload
+            mkdir -p $GITHUB_WORKSPACE/build-logs
+            cp /tmp/build.log $GITHUB_WORKSPACE/build-logs/ || true
+            find . -name "config.log" -exec cp {} $GITHUB_WORKSPACE/build-logs/ \; 2>/dev/null || true
+            find . -name "CMakeError.log" -exec cp {} $GITHUB_WORKSPACE/build-logs/ \; 2>/dev/null || true
+            
             exit $BUILD_EXIT_CODE
           fi
+      
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: build-logs/
+          retention-days: 7
+          if-no-files-found: ignore
       
       - name: Build Kodi
         run: |
