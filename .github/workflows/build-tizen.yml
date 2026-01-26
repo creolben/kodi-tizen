@@ -76,13 +76,51 @@ jobs:
           chmod +x web-cli_Tizen_Studio_*.bin
           ./web-cli_Tizen_Studio_*.bin --accept-license $HOME/tizen-studio
       
-      - name: Install Tizen packages
+      - name: Install Tizen packages and setup alternative toolchain
         run: |
+          # Try to install Tizen toolchain (likely to fail)
           $HOME/tizen-studio/package-manager/package-manager-cli.bin install \
             NativeToolchain-Gcc-9.2 \
             PLATFORM-6.0-NativeAppDevelopment-CLI || true
-          # Verify toolchain is installed
-          ls -la $HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin/ || echo "Toolchain not found"
+          
+          # Check if Tizen toolchain installed
+          if [ -d "$HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin" ]; then
+            echo "✓ Tizen toolchain installed successfully"
+            export TOOLCHAIN_PATH="$HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2"
+          else
+            echo "⚠ Tizen toolchain not available, using alternative ARM GCC"
+            
+            # Install ARM cross-compiler from Ubuntu repos
+            sudo apt-get install -y \
+              gcc-arm-linux-gnueabihf \
+              g++-arm-linux-gnueabihf \
+              binutils-arm-linux-gnueabihf
+            
+            # Create symlink structure to match Tizen paths
+            mkdir -p $HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin
+            cd $HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin
+            
+            # Create symlinks with Tizen naming convention
+            ln -s /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabi-gcc
+            ln -s /usr/bin/arm-linux-gnueabihf-g++ arm-linux-gnueabi-g++
+            ln -s /usr/bin/arm-linux-gnueabihf-ar arm-linux-gnueabi-ar
+            ln -s /usr/bin/arm-linux-gnueabihf-ranlib arm-linux-gnueabi-ranlib
+            ln -s /usr/bin/arm-linux-gnueabihf-ld arm-linux-gnueabi-ld
+            ln -s /usr/bin/arm-linux-gnueabihf-as arm-linux-gnueabi-as
+            ln -s /usr/bin/arm-linux-gnueabihf-nm arm-linux-gnueabi-nm
+            ln -s /usr/bin/arm-linux-gnueabihf-objdump arm-linux-gnueabi-objdump
+            ln -s /usr/bin/arm-linux-gnueabihf-strip arm-linux-gnueabi-strip
+            
+            echo "✓ Alternative ARM toolchain configured"
+            export TOOLCHAIN_PATH="$HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2"
+          fi
+          
+          # Verify toolchain is now available
+          echo "Toolchain binaries:"
+          ls -la $HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin/
+          echo ""
+          echo "GCC version:"
+          $HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin/arm-linux-gnueabi-gcc --version
       
       - name: Cache Kodi dependencies
         id: cache-kodi-deps
