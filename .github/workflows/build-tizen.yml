@@ -20,7 +20,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Full history for version info
       
@@ -59,7 +59,7 @@ jobs:
       
       - name: Cache Tizen SDK
         id: cache-tizen-sdk
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/tizen-studio
           key: tizen-sdk-5.0-${{ runner.os }}
@@ -82,7 +82,7 @@ jobs:
       
       - name: Cache Kodi dependencies
         id: cache-kodi-deps
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/kodi-tizen-deps
           key: kodi-deps-${{ hashFiles('tools/depends/**') }}
@@ -132,7 +132,7 @@ jobs:
           echo "Kodi version: $VERSION"
       
       - name: Upload TPK artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: kodi-tizen-${{ steps.version.outputs.version }}-arm
           path: build/*.tpk
