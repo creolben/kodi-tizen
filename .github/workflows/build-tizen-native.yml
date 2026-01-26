@@ -1,0 +1,130 @@
+name: Build Kodi for Tizen (Native Toolchain)
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-tizen:
+    name: Build Tizen TPK (Native ARM Toolchain)
+    runs-on: ubuntu-22.04
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Free up disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          df -h
+      
+      - name: Install ARM cross-compilation toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            curl \
+            git \
+            python3 \
+            python3-pip \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            gawk \
+            gperf \
+            zip \
+            unzip \
+            wget \
+            default-jre \
+            nasm \
+            yasm \
+            libssl-dev \
+            gcc-arm-linux-gnueabihf \
+            g++-arm-linux-gnueabihf \
+            binutils-arm-linux-gnueabihf
+          
+          # Verify toolchain
+          arm-linux-gnueabihf-gcc --version
+          arm-linux-gnueabihf-g++ --version
+      
+      - name: Patch for C++17 compatibility
+        run: |
+          sed -i 's/AX_CXX_COMPILE_STDCXX(\[20\]/AX_CXX_COMPILE_STDCXX([17]/' tools/depends/configure.ac
+          sed -i 's/CMAKE_CXX_STANDARD 20/CMAKE_CXX_STANDARD 17/' cmake/scripts/common/CompilerSettings.cmake
+          grep "AX_CXX_COMPILE_STDCXX" tools/depends/configure.ac
+          grep "CMAKE_CXX_STANDARD" cmake/scripts/common/CompilerSettings.cmake
+      
+      - name: Cache Kodi dependencies
+        id: cache-kodi-deps
+        uses: actions/cache@v4
+        with:
+          path: ~/kodi-tizen-deps
+          key: kodi-deps-native-${{ hashFiles('tools/depends/**') }}
+          restore-keys: |
+            kodi-deps-native-
+      
+      - name: Build Kodi dependencies
+        if: steps.cache-kodi-deps.outputs.cache-hit != 'true'
+        run: |
+          cd tools/depends
+          ./bootstrap
+          ./configure \
+            --prefix=$HOME/kodi-tizen-deps \
+            --host=arm-linux-gnueabihf \
+            --with-platform=linux \
+            --with-rendersystem=gles \
+            --enable-debug=no \
+            CC=arm-linux-gnueabihf-gcc \
+            CXX=arm-linux-gnueabihf-g++ \
+            AR=arm-linux-gnueabihf-ar \
+            RANLIB=arm-linux-gnueabihf-ranlib
+          make -j$(nproc)
+      
+      - name: Build Kodi
+        run: |
+          make -C tools/depends/target/cmakebuildsys
+          cd build
+          make -j$(nproc)
+      
+      - name: Package binaries
+        run: |
+          cd build
+          mkdir -p kodi-tizen-package
+          # Copy binaries and libraries
+          cp -r * kodi-tizen-package/ || true
+          tar -czf kodi-tizen-arm.tar.gz kodi-tizen-package/
+          ls -lh kodi-tizen-arm.tar.gz
+      
+      - name: Get version info
+        id: version
+        run: |
+          VERSION=$(grep "VERSION_MAJOR" version.txt | cut -d' ' -f2).$(grep "VERSION_MINOR" version.txt | cut -d' ' -f2)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Kodi version: $VERSION"
+      
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kodi-tizen-${{ steps.version.outputs.version }}-arm-native
+          path: build/kodi-tizen-arm.tar.gz
+          retention-days: 30
+      
+      - name: Build summary
+        run: |
+          echo "## Build Complete! 🎉" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Artifact Created:" >> $GITHUB_STEP_SUMMARY
+          ls -lh build/kodi-tizen-arm.tar.gz >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Note:** This build uses native ARM toolchain instead of Tizen SDK." >> $GITHUB_STEP_SUMMARY
+          echo "You'll need to manually package it as a TPK using Tizen Studio on your local machine." >> $GITHUB_STEP_SUMMARY
