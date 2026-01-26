@@ -285,32 +285,52 @@ jobs:
           mkdir -p $NATIVE_PREFIX/include
           mkdir -p $NATIVE_PREFIX/share
           mkdir -p $NATIVE_PREFIX/share/automake-1.18
+          mkdir -p $NATIVE_PREFIX/share/aclocal
           
           # Copy config.site to the native prefix
           cp native/config.site.native $NATIVE_PREFIX/share/config.site || true
           
-          # Symlink system tools to native prefix
-          ln -sf $(which cmake) $NATIVE_PREFIX/bin/cmake
-          ln -sf $(which ninja) $NATIVE_PREFIX/bin/ninja
-          ln -sf $(which make) $NATIVE_PREFIX/bin/make
-          ln -sf $(which meson) $NATIVE_PREFIX/bin/meson
-          ln -sf $(which nasm) $NATIVE_PREFIX/bin/nasm
-          ln -sf $(which python3) $NATIVE_PREFIX/bin/python3
-          ln -sf $(which swig) $NATIVE_PREFIX/bin/swig
-          ln -sf $(which bison) $NATIVE_PREFIX/bin/bison
-          ln -sf $(which m4) $NATIVE_PREFIX/bin/m4
-          ln -sf $(which autoconf) $NATIVE_PREFIX/bin/autoconf
-          ln -sf $(which automake) $NATIVE_PREFIX/bin/automake
-          ln -sf $(which autoreconf) $NATIVE_PREFIX/bin/autoreconf
-          ln -sf $(which autoheader) $NATIVE_PREFIX/bin/autoheader
-          ln -sf $(which aclocal) $NATIVE_PREFIX/bin/aclocal
-          ln -sf $(which autom4te) $NATIVE_PREFIX/bin/autom4te
-          ln -sf $(which libtool) $NATIVE_PREFIX/bin/libtool
-          ln -sf $(which libtoolize) $NATIVE_PREFIX/bin/libtoolize
-          ln -sf $(which pkg-config) $NATIVE_PREFIX/bin/pkg-config
-          ln -sf $(which gettext) $NATIVE_PREFIX/bin/gettext || true
-          ln -sf $(which msgfmt) $NATIVE_PREFIX/bin/msgfmt || true
-          ln -sf $(which autopoint) $NATIVE_PREFIX/bin/autopoint || true
+          # CRITICAL: Copy actual binaries instead of symlinks for cmake
+          # Symlinks can fail in some build contexts
+          CMAKE_PATH=$(which cmake)
+          echo "System cmake at: $CMAKE_PATH"
+          
+          # Create wrapper scripts instead of symlinks (more reliable)
+          cat > $NATIVE_PREFIX/bin/cmake << 'WRAPPER'
+#!/bin/bash
+exec /usr/bin/cmake "$@"
+WRAPPER
+          chmod +x $NATIVE_PREFIX/bin/cmake
+          
+          cat > $NATIVE_PREFIX/bin/ninja << 'WRAPPER'
+#!/bin/bash
+exec /usr/bin/ninja "$@"
+WRAPPER
+          chmod +x $NATIVE_PREFIX/bin/ninja
+          
+          cat > $NATIVE_PREFIX/bin/make << 'WRAPPER'
+#!/bin/bash
+exec /usr/bin/make "$@"
+WRAPPER
+          chmod +x $NATIVE_PREFIX/bin/make
+          
+          cat > $NATIVE_PREFIX/bin/meson << 'WRAPPER'
+#!/bin/bash
+exec /usr/bin/meson "$@"
+WRAPPER
+          chmod +x $NATIVE_PREFIX/bin/meson
+          
+          # Create wrapper scripts for other tools
+          for tool in nasm python3 swig bison m4 autoconf automake autoreconf autoheader aclocal autom4te libtool libtoolize pkg-config gettext msgfmt autopoint msgmerge xgettext; do
+            TOOL_PATH=$(which $tool 2>/dev/null)
+            if [ -n "$TOOL_PATH" ]; then
+              cat > $NATIVE_PREFIX/bin/$tool << WRAPPER
+#!/bin/bash
+exec $TOOL_PATH "\$@"
+WRAPPER
+              chmod +x $NATIVE_PREFIX/bin/$tool
+            fi
+          done
           
           # Copy automake data files (version 1.16 on Ubuntu 22.04)
           # But create symlinks for both 1.16 and 1.18 since Makefile.include expects 1.18
@@ -319,16 +339,23 @@ jobs:
           cp -r /usr/share/automake-$AUTOMAKE_VER/* $NATIVE_PREFIX/share/automake-1.18/ 2>/dev/null || \
           cp -r /usr/share/automake-*/* $NATIVE_PREFIX/share/automake-1.18/ 2>/dev/null || true
           
+          # Copy aclocal files
+          cp -r /usr/share/aclocal/* $NATIVE_PREFIX/share/aclocal/ 2>/dev/null || true
+          
           # Verify automake files exist
           echo "Automake files:"
           ls -la $NATIVE_PREFIX/share/automake-1.18/ | head -10
           
-          # Verify cmake is accessible
+          # Verify cmake is accessible and works
           echo "Verifying native tools:"
           ls -la $NATIVE_PREFIX/bin/cmake
+          echo "Testing cmake wrapper:"
           $NATIVE_PREFIX/bin/cmake --version
           ls -la $NATIVE_PREFIX/bin/make
           ls -la $NATIVE_PREFIX/bin/autopoint || echo "autopoint not found"
+          
+          # Also add native prefix to PATH for the build
+          export PATH=$NATIVE_PREFIX/bin:$PATH
           
           # CRITICAL: Create the MAIN native/.installed marker file
           # This is what the root Makefile checks to skip native builds
@@ -338,9 +365,18 @@ jobs:
           echo "Native marker file created:"
           ls -la native/.installed-x86_64-linux-native
           
+          # Verify PATH includes native prefix
+          echo "PATH: $PATH"
+          echo "Testing cmake from PATH:"
+          which cmake
+          cmake --version
+          
           # Now build only target dependencies
           # The native/.installed file tells make that native deps are done
-          make -C target -j$(nproc)
+          # Ensure native prefix is in PATH for cmake and other tools
+          export PATH=$NATIVE_PREFIX/bin:$PATH
+          echo "Building target dependencies with PATH=$PATH"
+          make -C target -j$(nproc) V=1 2>&1 | tail -500
       
       - name: Build Kodi
         run: |
