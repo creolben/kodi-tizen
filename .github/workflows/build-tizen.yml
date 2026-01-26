@@ -97,41 +97,44 @@ jobs:
             echo "⚠ Tizen toolchain not available, using alternative ARM GCC"
             
             # Install ARM cross-compiler from Ubuntu repos
+            # Use SOFT-FLOAT version (gnueabi) not hard-float (gnueabihf)
+            # Tizen uses -mfloat-abi=softfp which requires soft-float libs
             sudo apt-get install -y \
-              gcc-arm-linux-gnueabihf \
-              g++-arm-linux-gnueabihf \
-              binutils-arm-linux-gnueabihf
+              gcc-arm-linux-gnueabi \
+              g++-arm-linux-gnueabi \
+              binutils-arm-linux-gnueabi \
+              libc6-dev-armel-cross
             
             # Create symlink structure to match Tizen paths
             mkdir -p $HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin
             cd $HOME/tizen-studio/tools/arm-linux-gnueabi-gcc-9.2/bin
             
-            # Create symlinks with BOTH naming conventions
+            # Create symlinks using SOFT-FLOAT compiler (gnueabi, not gnueabihf)
             # Standard arm-linux-gnueabi-* names
-            ln -sf /usr/bin/arm-linux-gnueabihf-gcc arm-linux-gnueabi-gcc
-            ln -sf /usr/bin/arm-linux-gnueabihf-g++ arm-linux-gnueabi-g++
-            ln -sf /usr/bin/arm-linux-gnueabihf-ar arm-linux-gnueabi-ar
-            ln -sf /usr/bin/arm-linux-gnueabihf-ranlib arm-linux-gnueabi-ranlib
-            ln -sf /usr/bin/arm-linux-gnueabihf-ld arm-linux-gnueabi-ld
-            ln -sf /usr/bin/arm-linux-gnueabihf-as arm-linux-gnueabi-as
-            ln -sf /usr/bin/arm-linux-gnueabihf-nm arm-linux-gnueabi-nm
-            ln -sf /usr/bin/arm-linux-gnueabihf-objdump arm-linux-gnueabi-objdump
-            ln -sf /usr/bin/arm-linux-gnueabihf-strip arm-linux-gnueabi-strip
-            ln -sf /usr/bin/arm-linux-gnueabihf-readelf arm-linux-gnueabi-readelf
+            ln -sf /usr/bin/arm-linux-gnueabi-gcc arm-linux-gnueabi-gcc
+            ln -sf /usr/bin/arm-linux-gnueabi-g++ arm-linux-gnueabi-g++
+            ln -sf /usr/bin/arm-linux-gnueabi-ar arm-linux-gnueabi-ar
+            ln -sf /usr/bin/arm-linux-gnueabi-ranlib arm-linux-gnueabi-ranlib
+            ln -sf /usr/bin/arm-linux-gnueabi-ld arm-linux-gnueabi-ld
+            ln -sf /usr/bin/arm-linux-gnueabi-as arm-linux-gnueabi-as
+            ln -sf /usr/bin/arm-linux-gnueabi-nm arm-linux-gnueabi-nm
+            ln -sf /usr/bin/arm-linux-gnueabi-objdump arm-linux-gnueabi-objdump
+            ln -sf /usr/bin/arm-linux-gnueabi-strip arm-linux-gnueabi-strip
+            ln -sf /usr/bin/arm-linux-gnueabi-readelf arm-linux-gnueabi-readelf
             
             # ALSO create arm-tizen-linux-gnueabi-* names (for host triplet matching)
-            ln -sf /usr/bin/arm-linux-gnueabihf-gcc arm-tizen-linux-gnueabi-gcc
-            ln -sf /usr/bin/arm-linux-gnueabihf-g++ arm-tizen-linux-gnueabi-g++
-            ln -sf /usr/bin/arm-linux-gnueabihf-ar arm-tizen-linux-gnueabi-ar
-            ln -sf /usr/bin/arm-linux-gnueabihf-ranlib arm-tizen-linux-gnueabi-ranlib
-            ln -sf /usr/bin/arm-linux-gnueabihf-ld arm-tizen-linux-gnueabi-ld
-            ln -sf /usr/bin/arm-linux-gnueabihf-as arm-tizen-linux-gnueabi-as
-            ln -sf /usr/bin/arm-linux-gnueabihf-nm arm-tizen-linux-gnueabi-nm
-            ln -sf /usr/bin/arm-linux-gnueabihf-objdump arm-tizen-linux-gnueabi-objdump
-            ln -sf /usr/bin/arm-linux-gnueabihf-strip arm-tizen-linux-gnueabi-strip
-            ln -sf /usr/bin/arm-linux-gnueabihf-readelf arm-tizen-linux-gnueabi-readelf
+            ln -sf /usr/bin/arm-linux-gnueabi-gcc arm-tizen-linux-gnueabi-gcc
+            ln -sf /usr/bin/arm-linux-gnueabi-g++ arm-tizen-linux-gnueabi-g++
+            ln -sf /usr/bin/arm-linux-gnueabi-ar arm-tizen-linux-gnueabi-ar
+            ln -sf /usr/bin/arm-linux-gnueabi-ranlib arm-tizen-linux-gnueabi-ranlib
+            ln -sf /usr/bin/arm-linux-gnueabi-ld arm-tizen-linux-gnueabi-ld
+            ln -sf /usr/bin/arm-linux-gnueabi-as arm-tizen-linux-gnueabi-as
+            ln -sf /usr/bin/arm-linux-gnueabi-nm arm-tizen-linux-gnueabi-nm
+            ln -sf /usr/bin/arm-linux-gnueabi-objdump arm-tizen-linux-gnueabi-objdump
+            ln -sf /usr/bin/arm-linux-gnueabi-strip arm-tizen-linux-gnueabi-strip
+            ln -sf /usr/bin/arm-linux-gnueabi-readelf arm-tizen-linux-gnueabi-readelf
             
-            echo "✓ Alternative ARM toolchain configured"
+            echo "✓ Alternative ARM toolchain configured (soft-float)"
           fi
           
           # Verify toolchain is now available
@@ -210,28 +213,28 @@ jobs:
           export TIZEN_SDK=$HOME/tizen-studio
           
           # Use the arm-tizen-linux-gnueabi-* compilers (matches host triplet)
-          export CC=$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-gcc
-          export CXX=$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-g++
-          export AR=$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-ar
-          export RANLIB=$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-ranlib
-          export LD=$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-ld
-          export AS=$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-as
-          export NM=$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-nm
-          export STRIP=$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-strip
-          export READELF=$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-readelf
-          export OBJDUMP=$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-objdump
+          export CC="$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-gcc"
+          export CXX="$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-g++"
+          export AR="$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-ar"
+          export RANLIB="$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-ranlib"
+          export LD="$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-ld"
+          export AS="$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-as"
+          export NM="$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-nm"
+          export STRIP="$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-strip"
+          export READELF="$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-readelf"
+          export OBJDUMP="$TOOLCHAIN_DIR/bin/arm-tizen-linux-gnueabi-objdump"
           
           export CXXFLAGS="-std=c++17"
           export CFLAGS="-O2"
           
           # Use system CMake instead of building it
-          export CMAKE=$(which cmake)
-          export CMAKE_FOR_BUILD=$(which cmake)
+          export CMAKE="$(which cmake)"
+          export CMAKE_FOR_BUILD="$(which cmake)"
           
           # Use system native tools
-          export CC_FOR_BUILD=gcc
-          export CXX_FOR_BUILD=g++
-          export LD_FOR_BUILD=ld
+          export CC_FOR_BUILD="gcc"
+          export CXX_FOR_BUILD="g++"
+          export LD_FOR_BUILD="ld"
           
           # Test compiler with C++17
           echo "Testing C++17 support..."
@@ -251,7 +254,7 @@ jobs:
             --prefix=$HOME/kodi-tizen-deps \
             --host=arm-tizen-linux-gnueabi \
             --build=x86_64-linux-gnu \
-            --with-toolchain=$TOOLCHAIN_DIR \
+            --with-toolchain="$TOOLCHAIN_DIR" \
             --with-platform=tizen \
             --with-rendersystem=gles \
             --enable-debug=no \
@@ -281,7 +284,7 @@ jobs:
           mkdir -p $NATIVE_PREFIX/lib
           mkdir -p $NATIVE_PREFIX/include
           mkdir -p $NATIVE_PREFIX/share
-          mkdir -p $NATIVE_PREFIX/share/automake-1.16
+          mkdir -p $NATIVE_PREFIX/share/automake-1.18
           
           # Copy config.site to the native prefix
           cp native/config.site.native $NATIVE_PREFIX/share/config.site || true
@@ -289,6 +292,7 @@ jobs:
           # Symlink system tools to native prefix
           ln -sf $(which cmake) $NATIVE_PREFIX/bin/cmake
           ln -sf $(which ninja) $NATIVE_PREFIX/bin/ninja
+          ln -sf $(which make) $NATIVE_PREFIX/bin/make
           ln -sf $(which meson) $NATIVE_PREFIX/bin/meson
           ln -sf $(which nasm) $NATIVE_PREFIX/bin/nasm
           ln -sf $(which python3) $NATIVE_PREFIX/bin/python3
@@ -308,13 +312,23 @@ jobs:
           ln -sf $(which msgfmt) $NATIVE_PREFIX/bin/msgfmt || true
           ln -sf $(which autopoint) $NATIVE_PREFIX/bin/autopoint || true
           
-          # Copy automake data files
-          cp -r /usr/share/automake-*/* $NATIVE_PREFIX/share/automake-1.16/ 2>/dev/null || true
+          # Copy automake data files (version 1.16 on Ubuntu 22.04)
+          # But create symlinks for both 1.16 and 1.18 since Makefile.include expects 1.18
+          AUTOMAKE_VER=$(automake --version | head -1 | grep -oP '\d+\.\d+')
+          echo "System automake version: $AUTOMAKE_VER"
+          cp -r /usr/share/automake-$AUTOMAKE_VER/* $NATIVE_PREFIX/share/automake-1.18/ 2>/dev/null || \
+          cp -r /usr/share/automake-*/* $NATIVE_PREFIX/share/automake-1.18/ 2>/dev/null || true
+          
+          # Verify automake files exist
+          echo "Automake files:"
+          ls -la $NATIVE_PREFIX/share/automake-1.18/ | head -10
           
           # Verify cmake is accessible
           echo "Verifying native tools:"
           ls -la $NATIVE_PREFIX/bin/cmake
           $NATIVE_PREFIX/bin/cmake --version
+          ls -la $NATIVE_PREFIX/bin/make
+          ls -la $NATIVE_PREFIX/bin/autopoint || echo "autopoint not found"
           
           # CRITICAL: Create the MAIN native/.installed marker file
           # This is what the root Makefile checks to skip native builds
