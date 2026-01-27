@@ -312,14 +312,14 @@ jobs:
           ./bootstrap
           
           # Run configure and capture output
+          # Note: --with-platform is only for darwin builds
+          # For Tizen, the platform is auto-detected from --host=arm-tizen-linux-gnueabi
           echo "=== Running configure ==="
           ./configure \
             --prefix=$HOME/kodi-tizen-deps \
             --host=arm-tizen-linux-gnueabi \
             --build=x86_64-linux-gnu \
             --with-toolchain="$TOOLCHAIN_DIR" \
-            --with-platform=tizen \
-            --with-rendersystem=gles \
             --enable-debug=no \
             CC="$CC" \
             CXX="$CXX" \
