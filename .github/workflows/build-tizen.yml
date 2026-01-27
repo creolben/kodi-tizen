@@ -205,13 +205,17 @@ jobs:
             bison \
             flex \
             libtool \
-            libtool-bin
+            libtool-bin \
+            gperf
           
-          # Verify key tools
+          # Verify key tools including autopoint
           echo "CMake: $(cmake --version | head -1)"
           echo "Ninja: $(ninja --version)"
           echo "Meson: $(meson --version)"
           echo "Python: $(python3 --version)"
+          echo "Make: $(make --version | head -1)"
+          echo "Autopoint: $(which autopoint)"
+          autopoint --version || echo "autopoint installed (no --version)"
       
       - name: Ensure native tool wrappers exist
         run: |
@@ -223,38 +227,77 @@ jobs:
           mkdir -p $NATIVE_PREFIX/include
           mkdir -p $NATIVE_PREFIX/share
           
+          # Verify autopoint is installed (from gettext package)
+          echo "Checking for autopoint..."
+          which autopoint || { echo "ERROR: autopoint not found!"; exit 1; }
+          
           # Create cmake wrapper (CRITICAL - most builds need this)
           printf '#!/bin/sh\nexec /usr/bin/cmake "$@"\n' > $NATIVE_PREFIX/bin/cmake
           chmod +x $NATIVE_PREFIX/bin/cmake
+          
+          # Create make wrapper (CRITICAL - CMake needs this)
+          printf '#!/bin/sh\nexec /usr/bin/make "$@"\n' > $NATIVE_PREFIX/bin/make
+          chmod +x $NATIVE_PREFIX/bin/make
+          
+          # Create autopoint wrapper (CRITICAL - many deps need this)
+          AUTOPOINT_PATH=$(which autopoint)
+          printf '#!/bin/sh\nexec %s "$@"\n' "$AUTOPOINT_PATH" > $NATIVE_PREFIX/bin/autopoint
+          chmod +x $NATIVE_PREFIX/bin/autopoint
           
           # Create other essential tool wrappers
           printf '#!/bin/sh\nexec /usr/bin/ninja "$@"\n' > $NATIVE_PREFIX/bin/ninja
           chmod +x $NATIVE_PREFIX/bin/ninja
           
-          printf '#!/bin/sh\nexec /usr/bin/make "$@"\n' > $NATIVE_PREFIX/bin/make
-          chmod +x $NATIVE_PREFIX/bin/make
-          
           printf '#!/bin/sh\nexec /usr/bin/meson "$@"\n' > $NATIVE_PREFIX/bin/meson
           chmod +x $NATIVE_PREFIX/bin/meson
           
           # Create wrappers for autotools and other native tools
-          for tool in nasm python3 swig bison m4 autoconf automake autoreconf autoheader aclocal autom4te libtool libtoolize pkg-config gettext msgfmt autopoint msgmerge xgettext; do
+          for tool in nasm python3 swig bison m4 autoconf automake autoreconf autoheader aclocal autom4te libtool libtoolize pkg-config gettext msgfmt msgmerge xgettext gperf flex yacc patch tar gzip bzip2 xz unzip zip; do
             TOOL_PATH=$(command -v $tool 2>/dev/null || true)
             if [ -n "$TOOL_PATH" ]; then
               printf '#!/bin/sh\nexec %s "$@"\n' "$TOOL_PATH" > $NATIVE_PREFIX/bin/$tool
               chmod +x $NATIVE_PREFIX/bin/$tool
+              echo "Created wrapper: $tool -> $TOOL_PATH"
+            else
+              echo "Warning: $tool not found, skipping"
             fi
           done
           
           # Create compatibility symlink
           ln -sfn "$NATIVE_PREFIX" "$HOME/kodi-tizen-deps/x86_64-linux-native"
           
-          # Verify cmake works
-          echo "Verifying cmake at expected path:"
-          ls -la $NATIVE_PREFIX/bin/cmake
+          # CRITICAL: Verify all essential tools exist and are executable
+          echo ""
+          echo "=== Verifying essential native tools ==="
+          MISSING_TOOLS=""
+          for tool in cmake make autopoint ninja meson autoconf automake pkg-config; do
+            if [ -x "$NATIVE_PREFIX/bin/$tool" ]; then
+              echo "✓ $tool: OK"
+            else
+              echo "✗ $tool: MISSING or not executable!"
+              MISSING_TOOLS="$MISSING_TOOLS $tool"
+            fi
+          done
+          
+          if [ -n "$MISSING_TOOLS" ]; then
+            echo ""
+            echo "ERROR: Missing essential tools:$MISSING_TOOLS"
+            echo "Contents of $NATIVE_PREFIX/bin/:"
+            ls -la $NATIVE_PREFIX/bin/
+            exit 1
+          fi
+          
+          # Test cmake and make work
+          echo ""
+          echo "Testing cmake:"
           $NATIVE_PREFIX/bin/cmake --version
-          /home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/bin/cmake --version
-          echo "✓ Native tools ready"
+          echo "Testing make:"
+          $NATIVE_PREFIX/bin/make --version
+          echo "Testing autopoint:"
+          $NATIVE_PREFIX/bin/autopoint --version || echo "(autopoint may not have --version)"
+          
+          echo ""
+          echo "✓ All native tools ready"
       
       - name: Build Kodi dependencies
         if: steps.cache-kodi-deps.outputs.cache-hit != 'true'
