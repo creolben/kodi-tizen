@@ -363,33 +363,31 @@ jobs:
           mkdir -p $NATIVE_PREFIX/share/automake-1.18
           mkdir -p $NATIVE_PREFIX/share/aclocal
           
-          # Copy config.site to the native prefix
-          # Create a proper config.site for native builds
-          # Note: Using /home/runner directly since $HOME won't expand in quoted heredoc
-          cat > $NATIVE_PREFIX/share/config.site << 'CONFIGSITE_EOF'
-LD="${LD:-/usr/bin/ld}"
-CC="${CC:-/usr/bin/clang}"
-CXX="${CXX:-/usr/bin/clang++}"
-AR="${AR:-/usr/bin/ar}"
-RANLIB="${RANLIB:-/usr/bin/ranlib}"
-AS="${AS:-/usr/bin/as}"
-NM="${NM:-/usr/bin/nm}"
-STRIP="${STRIP:-/usr/bin/strip}"
-READELF="${READELF:-/usr/bin/readelf}"
-OBJDUMP="${OBJDUMP:-/usr/bin/objdump}"
-
-CFLAGS="-I/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/include $CFLAGS"
-LDFLAGS="-L/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/lib $LDFLAGS"
-CPPFLAGS="-I/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/include $CPPFLAGS"
-CXXFLAGS="-I/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/include $CXXFLAGS"
-
-PKG_CONFIG=/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/bin/pkg-config
-export PKG_CONFIG_LIBDIR=/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/lib/pkgconfig
-
-PATH=/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/bin:$PATH
-LD_LIBRARY_PATH=/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/lib:$LD_LIBRARY_PATH
-NASM=/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/bin/nasm
-CONFIGSITE_EOF
+          # Create config.site for native builds using echo (heredocs cause YAML issues)
+          {
+            echo 'LD="${LD:-/usr/bin/ld}"'
+            echo 'CC="${CC:-/usr/bin/clang}"'
+            echo 'CXX="${CXX:-/usr/bin/clang++}"'
+            echo 'AR="${AR:-/usr/bin/ar}"'
+            echo 'RANLIB="${RANLIB:-/usr/bin/ranlib}"'
+            echo 'AS="${AS:-/usr/bin/as}"'
+            echo 'NM="${NM:-/usr/bin/nm}"'
+            echo 'STRIP="${STRIP:-/usr/bin/strip}"'
+            echo 'READELF="${READELF:-/usr/bin/readelf}"'
+            echo 'OBJDUMP="${OBJDUMP:-/usr/bin/objdump}"'
+            echo ''
+            echo 'CFLAGS="-I/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/include $CFLAGS"'
+            echo 'LDFLAGS="-L/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/lib $LDFLAGS"'
+            echo 'CPPFLAGS="-I/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/include $CPPFLAGS"'
+            echo 'CXXFLAGS="-I/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/include $CXXFLAGS"'
+            echo ''
+            echo 'PKG_CONFIG=/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/bin/pkg-config'
+            echo 'export PKG_CONFIG_LIBDIR=/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/lib/pkgconfig'
+            echo ''
+            echo 'PATH=/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/bin:$PATH'
+            echo 'LD_LIBRARY_PATH=/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/lib:$LD_LIBRARY_PATH'
+            echo 'NASM=/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/bin/nasm'
+          } > $NATIVE_PREFIX/share/config.site
           
           echo "Created config.site for native prefix"
           
@@ -419,10 +417,7 @@ CONFIGSITE_EOF
           # Method 3: If still not working, create a shell wrapper
           if ! "$NATIVE_PREFIX/bin/cmake" --version >/dev/null 2>&1; then
             echo "Binary copy failed, creating shell wrapper..."
-            cat > "$NATIVE_PREFIX/bin/cmake" << 'CMAKEWRAPPER'
-#!/bin/sh
-exec /usr/bin/cmake "$@"
-CMAKEWRAPPER
+            printf '#!/bin/sh\nexec /usr/bin/cmake "$@"\n' > "$NATIVE_PREFIX/bin/cmake"
             chmod +x "$NATIVE_PREFIX/bin/cmake"
           fi
           
@@ -499,46 +494,45 @@ CMAKEWRAPPER
           
           # CRITICAL: Create Toolchain-Native.cmake
           # This is referenced by CMAKE_FOR_BUILD in Makefile.include
-          # Note: Using /home/runner directly since $HOME won't expand in quoted heredoc
-          cat > $NATIVE_PREFIX/share/Toolchain-Native.cmake << 'TOOLCHAIN_EOF'
-set(NATIVEPREFIX "/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native")
-
-set(OS "linux")
-set(CMAKE_SYSTEM_PROCESSOR x86_64)
-set(CPU "x86_64")
-set(ARCH_DEFINES -DTARGET_POSIX -DTARGET_LINUX)
-
-set(CMAKE_SYSTEM_NAME Linux)
-set(CMAKE_SYSTEM_VERSION 1)
-
-# specify the native compiler
-set(CMAKE_C_COMPILER /usr/bin/clang)
-set(CMAKE_CXX_COMPILER /usr/bin/clang++)
-set(CMAKE_AR /usr/bin/ar CACHE FILEPATH "Archiver")
-set(CMAKE_AS /usr/bin/as CACHE FILEPATH "Assembler")
-set(CMAKE_LINKER /usr/bin/ld CACHE FILEPATH "Linker")
-set(CMAKE_NM /usr/bin/nm CACHE FILEPATH "Nm")
-set(CMAKE_STRIP /usr/bin/strip CACHE PATH "strip binary" FORCE)
-set(CMAKE_OBJDUMP /usr/bin/objdump CACHE FILEPATH "Objdump")
-set(CMAKE_RANLIB /usr/bin/ranlib CACHE FILEPATH "Ranlib")
-
-set(CMAKE_C_FLAGS "-I${NATIVEPREFIX}/include")
-set(CMAKE_CXX_FLAGS "-I${NATIVEPREFIX}/include")
-set(CMAKE_EXE_LINKER_FLAGS "-L${NATIVEPREFIX}/lib")
-
-# where is the target environment
-set(CMAKE_FIND_ROOT_PATH ${NATIVEPREFIX})
-set(CMAKE_LIBRARY_PATH ${NATIVEPREFIX}/lib)
-
-# search for programs in the build host directories
-set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-# for libraries and headers in the target directories
-set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
-set(CMAKE_FIND_FRAMEWORK LAST)
-
-set(ENV{PATH} "${NATIVEPREFIX}/bin:$ENV{PATH}")
-TOOLCHAIN_EOF
+          {
+            echo 'set(NATIVEPREFIX "/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native")'
+            echo ''
+            echo 'set(OS "linux")'
+            echo 'set(CMAKE_SYSTEM_PROCESSOR x86_64)'
+            echo 'set(CPU "x86_64")'
+            echo 'set(ARCH_DEFINES -DTARGET_POSIX -DTARGET_LINUX)'
+            echo ''
+            echo 'set(CMAKE_SYSTEM_NAME Linux)'
+            echo 'set(CMAKE_SYSTEM_VERSION 1)'
+            echo ''
+            echo '# specify the native compiler'
+            echo 'set(CMAKE_C_COMPILER /usr/bin/clang)'
+            echo 'set(CMAKE_CXX_COMPILER /usr/bin/clang++)'
+            echo 'set(CMAKE_AR /usr/bin/ar CACHE FILEPATH "Archiver")'
+            echo 'set(CMAKE_AS /usr/bin/as CACHE FILEPATH "Assembler")'
+            echo 'set(CMAKE_LINKER /usr/bin/ld CACHE FILEPATH "Linker")'
+            echo 'set(CMAKE_NM /usr/bin/nm CACHE FILEPATH "Nm")'
+            echo 'set(CMAKE_STRIP /usr/bin/strip CACHE PATH "strip binary" FORCE)'
+            echo 'set(CMAKE_OBJDUMP /usr/bin/objdump CACHE FILEPATH "Objdump")'
+            echo 'set(CMAKE_RANLIB /usr/bin/ranlib CACHE FILEPATH "Ranlib")'
+            echo ''
+            echo 'set(CMAKE_C_FLAGS "-I${NATIVEPREFIX}/include")'
+            echo 'set(CMAKE_CXX_FLAGS "-I${NATIVEPREFIX}/include")'
+            echo 'set(CMAKE_EXE_LINKER_FLAGS "-L${NATIVEPREFIX}/lib")'
+            echo ''
+            echo '# where is the target environment'
+            echo 'set(CMAKE_FIND_ROOT_PATH ${NATIVEPREFIX})'
+            echo 'set(CMAKE_LIBRARY_PATH ${NATIVEPREFIX}/lib)'
+            echo ''
+            echo '# search for programs in the build host directories'
+            echo 'set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)'
+            echo '# for libraries and headers in the target directories'
+            echo 'set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)'
+            echo 'set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)'
+            echo 'set(CMAKE_FIND_FRAMEWORK LAST)'
+            echo ''
+            echo 'set(ENV{PATH} "${NATIVEPREFIX}/bin:$ENV{PATH}")'
+          } > $NATIVE_PREFIX/share/Toolchain-Native.cmake
           
           echo "Created Toolchain-Native.cmake"
           cat $NATIVE_PREFIX/share/Toolchain-Native.cmake
