@@ -203,6 +203,49 @@ jobs:
           echo "Meson: $(meson --version)"
           echo "Python: $(python3 --version)"
       
+      - name: Ensure native tool wrappers exist
+        run: |
+          # This step ensures native tools are available regardless of cache state
+          # The build expects tools at /home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/bin/
+          NATIVE_PREFIX=$HOME/kodi-tizen-deps/x86_64-linux-gnu-native
+          mkdir -p $NATIVE_PREFIX/bin
+          mkdir -p $NATIVE_PREFIX/lib
+          mkdir -p $NATIVE_PREFIX/include
+          mkdir -p $NATIVE_PREFIX/share
+          
+          # Create cmake wrapper (CRITICAL - most builds need this)
+          printf '#!/bin/sh\nexec /usr/bin/cmake "$@"\n' > $NATIVE_PREFIX/bin/cmake
+          chmod +x $NATIVE_PREFIX/bin/cmake
+          
+          # Create other essential tool wrappers
+          printf '#!/bin/sh\nexec /usr/bin/ninja "$@"\n' > $NATIVE_PREFIX/bin/ninja
+          chmod +x $NATIVE_PREFIX/bin/ninja
+          
+          printf '#!/bin/sh\nexec /usr/bin/make "$@"\n' > $NATIVE_PREFIX/bin/make
+          chmod +x $NATIVE_PREFIX/bin/make
+          
+          printf '#!/bin/sh\nexec /usr/bin/meson "$@"\n' > $NATIVE_PREFIX/bin/meson
+          chmod +x $NATIVE_PREFIX/bin/meson
+          
+          # Create wrappers for autotools and other native tools
+          for tool in nasm python3 swig bison m4 autoconf automake autoreconf autoheader aclocal autom4te libtool libtoolize pkg-config gettext msgfmt autopoint msgmerge xgettext; do
+            TOOL_PATH=$(command -v $tool 2>/dev/null || true)
+            if [ -n "$TOOL_PATH" ]; then
+              printf '#!/bin/sh\nexec %s "$@"\n' "$TOOL_PATH" > $NATIVE_PREFIX/bin/$tool
+              chmod +x $NATIVE_PREFIX/bin/$tool
+            fi
+          done
+          
+          # Create compatibility symlink
+          ln -sfn "$NATIVE_PREFIX" "$HOME/kodi-tizen-deps/x86_64-linux-native"
+          
+          # Verify cmake works
+          echo "Verifying cmake at expected path:"
+          ls -la $NATIVE_PREFIX/bin/cmake
+          $NATIVE_PREFIX/bin/cmake --version
+          /home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/bin/cmake --version
+          echo "✓ Native tools ready"
+      
       - name: Build Kodi dependencies
         if: steps.cache-kodi-deps.outputs.cache-hit != 'true'
         run: |
