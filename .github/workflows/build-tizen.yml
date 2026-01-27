@@ -184,6 +184,7 @@ jobs:
           # Install all native tools that Kodi's build system would otherwise compile
           sudo apt-get install -y \
             gettext \
+            autopoint \
             swig \
             default-jdk \
             liblzo2-dev \
@@ -206,16 +207,25 @@ jobs:
             flex \
             libtool \
             libtool-bin \
-            gperf
+            gperf \
+            make
           
           # Verify key tools including autopoint
+          echo "=== Verifying installed tools ==="
           echo "CMake: $(cmake --version | head -1)"
           echo "Ninja: $(ninja --version)"
           echo "Meson: $(meson --version)"
           echo "Python: $(python3 --version)"
           echo "Make: $(make --version | head -1)"
-          echo "Autopoint: $(which autopoint)"
-          autopoint --version || echo "autopoint installed (no --version)"
+          echo "Make path: $(which make)"
+          echo "Autopoint path: $(which autopoint || echo 'NOT FOUND')"
+          
+          # If autopoint not found, search for it
+          if ! which autopoint; then
+            echo "Searching for autopoint..."
+            find /usr -name "autopoint" 2>/dev/null || true
+            dpkg -L gettext | grep autopoint || true
+          fi
       
       - name: Ensure native tool wrappers exist
         run: |
@@ -227,9 +237,23 @@ jobs:
           mkdir -p $NATIVE_PREFIX/include
           mkdir -p $NATIVE_PREFIX/share
           
-          # Verify autopoint is installed (from gettext package)
-          echo "Checking for autopoint..."
-          which autopoint || { echo "ERROR: autopoint not found!"; exit 1; }
+          # Find autopoint - it may be in different locations
+          echo "=== Finding autopoint ==="
+          AUTOPOINT_PATH=""
+          for path in /usr/bin/autopoint /usr/local/bin/autopoint $(which autopoint 2>/dev/null); do
+            if [ -x "$path" ]; then
+              AUTOPOINT_PATH="$path"
+              echo "Found autopoint at: $AUTOPOINT_PATH"
+              break
+            fi
+          done
+          
+          if [ -z "$AUTOPOINT_PATH" ]; then
+            echo "ERROR: autopoint not found in any expected location!"
+            echo "Searching system..."
+            find /usr -name "autopoint" -type f 2>/dev/null || true
+            exit 1
+          fi
           
           # Create cmake wrapper (CRITICAL - most builds need this)
           printf '#!/bin/sh\nexec /usr/bin/cmake "$@"\n' > $NATIVE_PREFIX/bin/cmake
@@ -240,11 +264,10 @@ jobs:
           chmod +x $NATIVE_PREFIX/bin/make
           
           # Create autopoint wrapper (CRITICAL - many deps need this)
-          AUTOPOINT_PATH=$(which autopoint)
           printf '#!/bin/sh\nexec %s "$@"\n' "$AUTOPOINT_PATH" > $NATIVE_PREFIX/bin/autopoint
           chmod +x $NATIVE_PREFIX/bin/autopoint
           
-          # Create other essential tool wrappers
+          # Create other essential tool wrappers with explicit paths
           printf '#!/bin/sh\nexec /usr/bin/ninja "$@"\n' > $NATIVE_PREFIX/bin/ninja
           chmod +x $NATIVE_PREFIX/bin/ninja
           
@@ -272,7 +295,7 @@ jobs:
           MISSING_TOOLS=""
           for tool in cmake make autopoint ninja meson autoconf automake pkg-config; do
             if [ -x "$NATIVE_PREFIX/bin/$tool" ]; then
-              echo "✓ $tool: OK"
+              echo "✓ $tool: OK ($(cat $NATIVE_PREFIX/bin/$tool | grep exec | head -1))"
             else
               echo "✗ $tool: MISSING or not executable!"
               MISSING_TOOLS="$MISSING_TOOLS $tool"
@@ -295,6 +318,11 @@ jobs:
           $NATIVE_PREFIX/bin/make --version
           echo "Testing autopoint:"
           $NATIVE_PREFIX/bin/autopoint --version || echo "(autopoint may not have --version)"
+          
+          # List all created wrappers
+          echo ""
+          echo "=== All native tool wrappers ==="
+          ls -la $NATIVE_PREFIX/bin/
           
           echo ""
           echo "✓ All native tools ready"
