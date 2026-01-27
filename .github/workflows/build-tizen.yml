@@ -343,23 +343,31 @@ CONFIGSITE_EOF
           
           # Create wrapper scripts instead of symlinks (more reliable)
           # Using printf to avoid heredoc YAML issues
-          printf '#!/bin/bash\nexec /usr/bin/cmake "$@"\n' > $NATIVE_PREFIX/bin/cmake
-          chmod +x $NATIVE_PREFIX/bin/cmake
+          # Use /bin/sh for maximum compatibility (some systems use dash)
           
-          printf '#!/bin/bash\nexec /usr/bin/ninja "$@"\n' > $NATIVE_PREFIX/bin/ninja
+          # For cmake, use a direct symlink since it's critical and wrapper scripts
+          # can have issues with how /bin/sh handles them
+          ln -sf /usr/bin/cmake $NATIVE_PREFIX/bin/cmake
+          echo "Created symlink for cmake -> /usr/bin/cmake"
+          
+          # Verify the symlink works
+          ls -la $NATIVE_PREFIX/bin/cmake
+          $NATIVE_PREFIX/bin/cmake --version
+          
+          printf '#!/bin/sh\nexec /usr/bin/ninja "$@"\n' > $NATIVE_PREFIX/bin/ninja
           chmod +x $NATIVE_PREFIX/bin/ninja
           
-          printf '#!/bin/bash\nexec /usr/bin/make "$@"\n' > $NATIVE_PREFIX/bin/make
+          printf '#!/bin/sh\nexec /usr/bin/make "$@"\n' > $NATIVE_PREFIX/bin/make
           chmod +x $NATIVE_PREFIX/bin/make
           
-          printf '#!/bin/bash\nexec /usr/bin/meson "$@"\n' > $NATIVE_PREFIX/bin/meson
+          printf '#!/bin/sh\nexec /usr/bin/meson "$@"\n' > $NATIVE_PREFIX/bin/meson
           chmod +x $NATIVE_PREFIX/bin/meson
           
           # Create wrapper scripts for other tools
           for tool in nasm python3 swig bison m4 autoconf automake autoreconf autoheader aclocal autom4te libtool libtoolize pkg-config gettext msgfmt autopoint msgmerge xgettext; do
             TOOL_PATH=$(command -v $tool 2>/dev/null || true)
             if [ -n "$TOOL_PATH" ]; then
-              printf '#!/bin/bash\nexec %s "$@"\n' "$TOOL_PATH" > $NATIVE_PREFIX/bin/$tool
+              printf '#!/bin/sh\nexec %s "$@"\n' "$TOOL_PATH" > $NATIVE_PREFIX/bin/$tool
               chmod +x $NATIVE_PREFIX/bin/$tool
               echo "Created wrapper for $tool -> $TOOL_PATH"
             else
@@ -487,6 +495,18 @@ TOOLCHAIN_EOF
           echo "Building target dependencies with PATH=$PATH"
           
           echo "=== CHECKPOINT 5: Starting make ==="
+          
+          # CRITICAL: Verify cmake wrapper exists and is executable
+          echo "Verifying cmake wrapper before make:"
+          ls -la $NATIVE_PREFIX/bin/cmake
+          file $NATIVE_PREFIX/bin/cmake
+          cat $NATIVE_PREFIX/bin/cmake
+          echo "Testing cmake wrapper execution:"
+          $NATIVE_PREFIX/bin/cmake --version
+          
+          # Also verify the path in Makefile.include matches
+          echo "CMAKE path from Makefile.include:"
+          grep "^CMAKE=" Makefile.include || echo "CMAKE not found in Makefile.include"
           
           # Run make with verbose output and capture errors
           set +e
