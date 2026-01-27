@@ -59,20 +59,34 @@ jobs:
           which cmake
           pkg-config --modversion libcurl
       
+      - name: Cache Tizen SDK installer
+        id: cache-tizen-installer
+        uses: actions/cache@v4
+        with:
+          path: /tmp/tizen-studio-installer
+          key: tizen-studio-installer-6.1
+      
       - name: Cache Tizen SDK
         id: cache-tizen-sdk
         uses: actions/cache@v4
         with:
           path: ~/tizen-studio
-          key: tizen-sdk-6.1-${{ runner.os }}
+          key: tizen-sdk-6.1-${{ runner.os }}-v2
       
       - name: Download and install Tizen SDK
         if: steps.cache-tizen-sdk.outputs.cache-hit != 'true'
         run: |
-          cd /tmp
-          # Try Tizen Studio 6.1 first, fallback to 5.0 if not available
-          wget http://download.tizen.org/sdk/Installer/tizen-studio_6.1/web-cli_Tizen_Studio_6.1_ubuntu-64.bin || \
-          wget http://download.tizen.org/sdk/Installer/tizen-studio_5.0/web-cli_Tizen_Studio_5.0_ubuntu-64.bin
+          mkdir -p /tmp/tizen-studio-installer
+          cd /tmp/tizen-studio-installer
+          
+          # Check if installer is cached
+          if [ ! -f web-cli_Tizen_Studio_6.1_ubuntu-64.bin ]; then
+            echo "Downloading Tizen Studio installer..."
+            wget -q http://download.tizen.org/sdk/Installer/tizen-studio_6.1/web-cli_Tizen_Studio_6.1_ubuntu-64.bin || \
+            wget -q http://download.tizen.org/sdk/Installer/tizen-studio_5.0/web-cli_Tizen_Studio_5.0_ubuntu-64.bin
+          else
+            echo "Using cached Tizen Studio installer"
+          fi
           
           # Install whichever version was downloaded
           chmod +x web-cli_Tizen_Studio_*.bin
