@@ -336,6 +336,11 @@ CONFIGSITE_EOF
           
           echo "=== CHECKPOINT 2: Native prefix created ==="
           
+          # Create compatibility symlink for alternate naming convention
+          # Some parts of the build may look for x86_64-linux-native instead of x86_64-linux-gnu-native
+          ln -sfn "$NATIVE_PREFIX" "$HOME/kodi-tizen-deps/x86_64-linux-native"
+          echo "Created compatibility symlink: x86_64-linux-native -> x86_64-linux-gnu-native"
+          
           # CRITICAL: Copy actual binaries instead of symlinks for cmake
           # Symlinks can fail in some build contexts
           CMAKE_PATH=$(which cmake)
@@ -500,13 +505,24 @@ TOOLCHAIN_EOF
           
           echo "=== CHECKPOINT 5: Starting make ==="
           
-          # CRITICAL: Verify cmake wrapper exists and is executable
-          echo "Verifying cmake wrapper before make:"
-          ls -la $NATIVE_PREFIX/bin/cmake
-          file $NATIVE_PREFIX/bin/cmake
-          cat $NATIVE_PREFIX/bin/cmake
-          echo "Testing cmake wrapper execution:"
-          $NATIVE_PREFIX/bin/cmake --version
+          # CRITICAL: Verify cmake exists at the EXACT path the build expects
+          EXPECTED_CMAKE="$HOME/kodi-tizen-deps/x86_64-linux-gnu-native/bin/cmake"
+          echo "Checking for cmake at: $EXPECTED_CMAKE"
+          ls -la "$EXPECTED_CMAKE" || true
+          
+          if [ ! -x "$EXPECTED_CMAKE" ]; then
+            echo "ERROR: expected cmake not found at $EXPECTED_CMAKE"
+            echo "Listing kodi-tizen-deps directory:"
+            ls -la $HOME/kodi-tizen-deps/ || true
+            echo "Listing native prefix bin dirs:"
+            ls -la $HOME/kodi-tizen-deps/*-linux*native/bin/ 2>/dev/null || true
+            echo "Listing NATIVE_PREFIX/bin:"
+            ls -la $NATIVE_PREFIX/bin/ || true
+            exit 1
+          fi
+          
+          echo "Testing cmake execution:"
+          "$EXPECTED_CMAKE" --version
           
           # Also verify the path in Makefile.include matches
           echo "CMAKE path from Makefile.include:"
