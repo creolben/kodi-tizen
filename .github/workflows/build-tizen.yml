@@ -343,33 +343,45 @@ CONFIGSITE_EOF
           ln -sfn "$NATIVE_PREFIX" "$HOME/kodi-tizen-deps/x86_64-linux-native"
           echo "Created compatibility symlink: x86_64-linux-native -> x86_64-linux-gnu-native"
           
-          # CRITICAL: Create cmake symlink at the exact path the build expects
+          # CRITICAL: Create cmake at the exact path the build expects
           CMAKE_PATH=$(which cmake)
           echo "System cmake at: $CMAKE_PATH"
-          echo "Creating cmake symlink at: $NATIVE_PREFIX/bin/cmake"
+          echo "Target path: $NATIVE_PREFIX/bin/cmake"
+          echo "Absolute target: /home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/bin/cmake"
           
-          # Use ln -sf with the full path from which cmake
-          ln -sf "$CMAKE_PATH" "$NATIVE_PREFIX/bin/cmake"
+          # Method 1: Try symlink first
+          ln -sf "$CMAKE_PATH" "$NATIVE_PREFIX/bin/cmake" 2>/dev/null || true
           
-          # Verify the symlink was created correctly
-          echo "Verifying cmake symlink:"
-          ls -la "$NATIVE_PREFIX/bin/cmake"
-          
-          # Test that it's executable
+          # Method 2: If symlink doesn't work or isn't executable, copy the binary
           if ! [ -x "$NATIVE_PREFIX/bin/cmake" ]; then
-            echo "ERROR: cmake symlink not executable at $NATIVE_PREFIX/bin/cmake"
-            echo "Trying alternative: copying cmake binary"
+            echo "Symlink failed, copying cmake binary..."
             cp "$CMAKE_PATH" "$NATIVE_PREFIX/bin/cmake"
             chmod +x "$NATIVE_PREFIX/bin/cmake"
           fi
           
-          # Final verification - actually run cmake
-          echo "Testing cmake execution from native prefix:"
+          # Method 3: If still not working, create a shell wrapper
+          if ! "$NATIVE_PREFIX/bin/cmake" --version >/dev/null 2>&1; then
+            echo "Binary copy failed, creating shell wrapper..."
+            cat > "$NATIVE_PREFIX/bin/cmake" << 'CMAKEWRAPPER'
+#!/bin/sh
+exec /usr/bin/cmake "$@"
+CMAKEWRAPPER
+            chmod +x "$NATIVE_PREFIX/bin/cmake"
+          fi
+          
+          # Final verification - this MUST work or we fail
+          echo "=== Final cmake verification ==="
+          ls -la "$NATIVE_PREFIX/bin/cmake"
+          file "$NATIVE_PREFIX/bin/cmake" || true
+          
+          echo "Testing cmake execution:"
           "$NATIVE_PREFIX/bin/cmake" --version
           
-          # Also verify the absolute path works (this is what Makefile uses)
-          echo "Testing absolute path execution:"
+          echo "Testing absolute path (what Makefile uses):"
           /home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/bin/cmake --version
+          
+          # If we get here, cmake is working
+          echo "✓ cmake is working at expected path"
           
           printf '#!/bin/sh\nexec /usr/bin/ninja "$@"\n' > $NATIVE_PREFIX/bin/ninja
           chmod +x $NATIVE_PREFIX/bin/ninja
