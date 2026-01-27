@@ -191,7 +191,9 @@ jobs:
             python3-setuptools \
             texinfo \
             bison \
-            flex
+            flex \
+            libtool \
+            libtool-bin
           
           # Verify key tools
           echo "CMake: $(cmake --version | head -1)"
@@ -327,10 +329,13 @@ jobs:
           
           # Create wrapper scripts for other tools
           for tool in nasm python3 swig bison m4 autoconf automake autoreconf autoheader aclocal autom4te libtool libtoolize pkg-config gettext msgfmt autopoint msgmerge xgettext; do
-            TOOL_PATH=$(which $tool 2>/dev/null)
+            TOOL_PATH=$(command -v $tool 2>/dev/null || true)
             if [ -n "$TOOL_PATH" ]; then
               printf '#!/bin/bash\nexec %s "$@"\n' "$TOOL_PATH" > $NATIVE_PREFIX/bin/$tool
               chmod +x $NATIVE_PREFIX/bin/$tool
+              echo "Created wrapper for $tool -> $TOOL_PATH"
+            else
+              echo "Warning: $tool not found, skipping"
             fi
           done
           
