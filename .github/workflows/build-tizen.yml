@@ -168,19 +168,15 @@ jobs:
       
       - name: Patch for C++17 compatibility
         run: |
-          # Patch configure.ac to use C++17 instead of C++20 for GCC 9.2 compatibility
-          sed -i 's/AX_CXX_COMPILE_STDCXX(\[20\]/AX_CXX_COMPILE_STDCXX([17]/' tools/depends/configure.ac
-          # Patch CMake to use C++17
+          # Check current C++ standard in configure.ac
+          echo "=== Current configure.ac C++ setting ==="
+          grep "AX_CXX_COMPILE_STDCXX" tools/depends/configure.ac || echo "Not found"
+          
+          # Patch CMake to use C++17 (if it's set to C++20)
           sed -i 's/CMAKE_CXX_STANDARD 20/CMAKE_CXX_STANDARD 17/' cmake/scripts/common/CompilerSettings.cmake
           
-          # AGGRESSIVE FIX: Comment out the C++17 check entirely
-          # We know GCC 11 supports C++17, so skip the broken detection
-          sed -i 's/^AX_CXX_COMPILE_STDCXX/dnl AX_CXX_COMPILE_STDCXX/' tools/depends/configure.ac
-          
           # Verify patches
-          echo "=== Patched configure.ac ==="
-          grep "AX_CXX_COMPILE_STDCXX" tools/depends/configure.ac || echo "C++17 check disabled"
-          echo "=== Patched CompilerSettings.cmake ==="
+          echo "=== CompilerSettings.cmake ==="
           grep "CMAKE_CXX_STANDARD" cmake/scripts/common/CompilerSettings.cmake
       
       - name: Install additional native build dependencies
@@ -309,7 +305,13 @@ jobs:
           $CMAKE --version
           
           cd tools/depends
-          ./bootstrap
+          
+          echo "=== Running bootstrap ==="
+          ./bootstrap 2>&1 || {
+            echo "=== Bootstrap failed! ==="
+            exit 1
+          }
+          echo "=== Bootstrap completed ==="
           
           # Run configure and capture output
           # Note: --with-platform is only for darwin builds
