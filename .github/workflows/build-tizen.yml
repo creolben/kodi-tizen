@@ -350,8 +350,12 @@ CONFIGSITE_EOF
           ln -sf /usr/bin/cmake $NATIVE_PREFIX/bin/cmake
           echo "Created symlink for cmake -> /usr/bin/cmake"
           
-          # Verify the symlink works
+          # Verify the symlink works - fail fast if not
           ls -la $NATIVE_PREFIX/bin/cmake
+          if ! [ -x "$NATIVE_PREFIX/bin/cmake" ]; then
+            echo "ERROR: Failed to create native cmake wrapper at $NATIVE_PREFIX/bin/cmake"
+            exit 1
+          fi
           $NATIVE_PREFIX/bin/cmake --version
           
           printf '#!/bin/sh\nexec /usr/bin/ninja "$@"\n' > $NATIVE_PREFIX/bin/ninja
