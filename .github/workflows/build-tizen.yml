@@ -293,9 +293,10 @@ jobs:
           echo "=== CHECKPOINT 1: Configure completed ==="
           
           # Create the native prefix directory structure
-          # Note: The path is x86_64-linux-native (build_cpu-build_os-native)
-          # build_os is "linux" not "linux-gnu" per configure.ac
-          NATIVE_PREFIX=$HOME/kodi-tizen-deps/x86_64-linux-native
+          # CRITICAL: The path MUST match what configure generates in Makefile.include
+          # Configure uses: NATIVEPREFIX=/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native
+          # This is build_cpu-build_os-native where build_os comes from config.guess
+          NATIVE_PREFIX=$HOME/kodi-tizen-deps/x86_64-linux-gnu-native
           mkdir -p $NATIVE_PREFIX/bin
           mkdir -p $NATIVE_PREFIX/lib
           mkdir -p $NATIVE_PREFIX/include
@@ -304,7 +305,34 @@ jobs:
           mkdir -p $NATIVE_PREFIX/share/aclocal
           
           # Copy config.site to the native prefix
-          cp native/config.site.native $NATIVE_PREFIX/share/config.site || true
+          # Create a proper config.site for native builds
+          # Note: Using /home/runner directly since $HOME won't expand in quoted heredoc
+          cat > $NATIVE_PREFIX/share/config.site << 'CONFIGSITE_EOF'
+LD="${LD:-/usr/bin/ld}"
+CC="${CC:-/usr/bin/clang}"
+CXX="${CXX:-/usr/bin/clang++}"
+AR="${AR:-/usr/bin/ar}"
+RANLIB="${RANLIB:-/usr/bin/ranlib}"
+AS="${AS:-/usr/bin/as}"
+NM="${NM:-/usr/bin/nm}"
+STRIP="${STRIP:-/usr/bin/strip}"
+READELF="${READELF:-/usr/bin/readelf}"
+OBJDUMP="${OBJDUMP:-/usr/bin/objdump}"
+
+CFLAGS="-I/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/include $CFLAGS"
+LDFLAGS="-L/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/lib $LDFLAGS"
+CPPFLAGS="-I/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/include $CPPFLAGS"
+CXXFLAGS="-I/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/include $CXXFLAGS"
+
+PKG_CONFIG=/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/bin/pkg-config
+export PKG_CONFIG_LIBDIR=/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/lib/pkgconfig
+
+PATH=/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/bin:$PATH
+LD_LIBRARY_PATH=/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/lib:$LD_LIBRARY_PATH
+NASM=/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native/bin/nasm
+CONFIGSITE_EOF
+          
+          echo "Created config.site for native prefix"
           
           echo "=== CHECKPOINT 2: Native prefix created ==="
           
@@ -348,12 +376,24 @@ jobs:
           AUTOMAKE_DIR=$(ls -d /usr/share/automake-* 2>/dev/null | head -1)
           if [ -n "$AUTOMAKE_DIR" ] && [ -d "$AUTOMAKE_DIR" ]; then
             echo "Found automake directory: $AUTOMAKE_DIR"
-            cp -r "$AUTOMAKE_DIR"/* $NATIVE_PREFIX/share/automake-1.18/ 2>/dev/null || true
+            # Copy all files, resolving symlinks
+            cp -rL "$AUTOMAKE_DIR"/* $NATIVE_PREFIX/share/automake-1.18/ 2>/dev/null || true
+            
+            # Ensure config.sub and config.guess are actual files (not broken symlinks)
+            # These are often symlinks to /usr/share/misc/
+            if [ -f /usr/share/misc/config.sub ]; then
+              cp /usr/share/misc/config.sub $NATIVE_PREFIX/share/automake-1.18/config.sub
+              echo "Copied config.sub from /usr/share/misc/"
+            fi
+            if [ -f /usr/share/misc/config.guess ]; then
+              cp /usr/share/misc/config.guess $NATIVE_PREFIX/share/automake-1.18/config.guess
+              echo "Copied config.guess from /usr/share/misc/"
+            fi
           else
             echo "Warning: No automake directory found, creating minimal files"
-            # Create minimal required files
-            touch $NATIVE_PREFIX/share/automake-1.18/config.sub
-            touch $NATIVE_PREFIX/share/automake-1.18/config.guess
+            # Create minimal required files from /usr/share/misc
+            cp /usr/share/misc/config.sub $NATIVE_PREFIX/share/automake-1.18/config.sub 2>/dev/null || touch $NATIVE_PREFIX/share/automake-1.18/config.sub
+            cp /usr/share/misc/config.guess $NATIVE_PREFIX/share/automake-1.18/config.guess 2>/dev/null || touch $NATIVE_PREFIX/share/automake-1.18/config.guess
           fi
           
           # Copy aclocal files
@@ -362,6 +402,52 @@ jobs:
           # Verify automake files exist
           echo "Automake files:"
           ls -la $NATIVE_PREFIX/share/automake-1.18/ 2>/dev/null | head -10 || echo "No automake files found"
+          
+          # CRITICAL: Create Toolchain-Native.cmake
+          # This is referenced by CMAKE_FOR_BUILD in Makefile.include
+          # Note: Using /home/runner directly since $HOME won't expand in quoted heredoc
+          cat > $NATIVE_PREFIX/share/Toolchain-Native.cmake << 'TOOLCHAIN_EOF'
+set(NATIVEPREFIX "/home/runner/kodi-tizen-deps/x86_64-linux-gnu-native")
+
+set(OS "linux")
+set(CMAKE_SYSTEM_PROCESSOR x86_64)
+set(CPU "x86_64")
+set(ARCH_DEFINES -DTARGET_POSIX -DTARGET_LINUX)
+
+set(CMAKE_SYSTEM_NAME Linux)
+set(CMAKE_SYSTEM_VERSION 1)
+
+# specify the native compiler
+set(CMAKE_C_COMPILER /usr/bin/clang)
+set(CMAKE_CXX_COMPILER /usr/bin/clang++)
+set(CMAKE_AR /usr/bin/ar CACHE FILEPATH "Archiver")
+set(CMAKE_AS /usr/bin/as CACHE FILEPATH "Assembler")
+set(CMAKE_LINKER /usr/bin/ld CACHE FILEPATH "Linker")
+set(CMAKE_NM /usr/bin/nm CACHE FILEPATH "Nm")
+set(CMAKE_STRIP /usr/bin/strip CACHE PATH "strip binary" FORCE)
+set(CMAKE_OBJDUMP /usr/bin/objdump CACHE FILEPATH "Objdump")
+set(CMAKE_RANLIB /usr/bin/ranlib CACHE FILEPATH "Ranlib")
+
+set(CMAKE_C_FLAGS "-I${NATIVEPREFIX}/include")
+set(CMAKE_CXX_FLAGS "-I${NATIVEPREFIX}/include")
+set(CMAKE_EXE_LINKER_FLAGS "-L${NATIVEPREFIX}/lib")
+
+# where is the target environment
+set(CMAKE_FIND_ROOT_PATH ${NATIVEPREFIX})
+set(CMAKE_LIBRARY_PATH ${NATIVEPREFIX}/lib)
+
+# search for programs in the build host directories
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+# for libraries and headers in the target directories
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_FRAMEWORK LAST)
+
+set(ENV{PATH} "${NATIVEPREFIX}/bin:$ENV{PATH}")
+TOOLCHAIN_EOF
+          
+          echo "Created Toolchain-Native.cmake"
+          cat $NATIVE_PREFIX/share/Toolchain-Native.cmake
           
           # Verify cmake is accessible and works
           echo "=== CHECKPOINT 3: Wrapper scripts created ==="
@@ -377,6 +463,9 @@ jobs:
           
           # CRITICAL: Create the MAIN native/.installed marker file
           # This is what the root Makefile checks to skip native builds
+          # The marker uses NATIVEPLATFORM (x86_64-linux-native) NOT NATIVEPREFIX path
+          # From Makefile: NATIVE=native/.installed-$(NATIVEPLATFORM)
+          # From Makefile.include: NATIVEPLATFORM=x86_64-linux-native
           touch native/.installed-x86_64-linux-native
           
           echo "=== CHECKPOINT 4: Native marker created ==="
