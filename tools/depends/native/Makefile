@@ -1,5 +1,8 @@
 include ../Makefile.include
 
+# Prevent target flags (e.g. ARM) from polluting native (host) build
+unexport CFLAGS CXXFLAGS CPPFLAGS LDFLAGS
+
 ifneq ($(shell test -f $(NATIVEPREFIX)/share/config.site && echo 1),1)
   $(error Error: $(NATIVEPREFIX)/share/config.site  is missing. Please reconfigure depends to generate it)
 endif

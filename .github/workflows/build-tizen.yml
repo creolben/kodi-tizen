@@ -325,7 +325,35 @@ jobs:
           ls -la $NATIVE_PREFIX/bin/
           
           echo ""
-          echo "✓ All native tools ready"
+      - name: Setup Tizen Certificate
+        run: |
+          echo "Setting up Tizen certificates for signing..."
+          mkdir -p $HOME/tizen-studio-data/keystore/author
+          mkdir -p $HOME/tizen-studio-data/keystore/distributor
+          
+          # 1. Generate Author Cert (Self-signed)
+          $HOME/tizen-studio/tools/ide/bin/tizen certificate -a "KodiCI" \
+            -f ci_author -p "1234" -c "US" -o "Kodi" -n "KodiCI" \
+            -e "ci@kodi.tv"
+            
+          # 2. Generate Distributor Cert (Placeholder/Generic)
+          # Note: We use 'certificate -a' because CLI doesn't support explicit distributor gen.
+          # This satisfies the build requirement.
+          $HOME/tizen-studio/tools/ide/bin/tizen certificate -a "KodiCI_Dist" \
+            -f ci_dist -p "1234" -c "US" -o "Kodi" -n "KodiCI_Dist" \
+            -e "ci@kodi.tv"
+            
+          # 3. Create Security Profile 'tv-samsung' (matches tizen-manifest.xml)
+          # Note: The distributor cert generated above ends up in keystore/author by default
+          $HOME/tizen-studio/tools/ide/bin/tizen security-profiles add \
+            -n "tv-samsung" \
+            -a "$HOME/tizen-studio-data/keystore/author/ci_author.p12" -p "1234" \
+            -d "$HOME/tizen-studio-data/keystore/author/ci_dist.p12" -dp "1234"
+            
+          # 4. Verify Profile
+          $HOME/tizen-studio/tools/ide/bin/tizen security-profiles list
+          
+          echo "✓ Certificate profile 'tv-samsung' created"
       
       - name: Build Kodi dependencies
         if: steps.cache-kodi-deps.outputs.cache-hit != 'true'
@@ -711,6 +739,7 @@ jobs:
         run: |
           export PATH=$PATH:$HOME/tizen-studio/tools
           export TIZEN_SDK=$HOME/tizen-studio
+          export TIZEN_SECURITY_PROFILE="tv-samsung"
           make -C tools/depends/target/cmakebuildsys
           cd build
           make -j$(nproc)
@@ -718,6 +747,8 @@ jobs:
       - name: Create TPK package
         run: |
           cd build
+          # Enable signing by setting the profile name
+          export TIZEN_SECURITY_PROFILE="tv-samsung"
           make tpk
           # List created files
           ls -lh *.tpk || echo "No TPK files found"

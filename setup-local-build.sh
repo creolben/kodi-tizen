@@ -128,7 +128,7 @@ else
     echo "Installing toolchain..."
     "$TIZEN_SDK_DIR/package-manager/package-manager-cli.bin" install \
         NativeToolchain-Gcc-9.2 \
-        PLATFORM-6.0-NativeAppDevelopment-CLI 2>&1 | grep -v "^Downloading" || true
+        MOBILE-6.0-NativeAppDevelopment-CLI 2>&1 | grep -v "^Downloading" || true
     
     if [ -d "$TIZEN_SDK_DIR/tools/arm-linux-gnueabi-gcc-9.2" ]; then
         echo -e "${GREEN}✓ Tizen SDK installed${NC}"
@@ -140,6 +140,31 @@ fi
 
 export PATH="$PATH:$TIZEN_SDK_DIR/tools"
 export TIZEN_SDK="$TIZEN_SDK_DIR"
+export SYSROOT="$TIZEN_SDK_DIR/platforms/tizen-6.0/mobile/rootstraps/mobile-6.0-device.core"
+export CFLAGS="--sysroot=$SYSROOT"
+export CXXFLAGS="--sysroot=$SYSROOT"
+
+# Creating symlinks for toolchain compatibility
+print_step "Step 1.5/4: Configuring Toolchain"
+
+TOOLCHAIN_BIN="$TIZEN_SDK_DIR/tools/arm-linux-gnueabi-gcc-9.2/bin"
+cd "$TOOLCHAIN_BIN"
+
+# Link arm-linux-gnueabi-* to arm-tizen-linux-gnueabi-*
+for tool in arm-linux-gnueabi-*; do
+    target="arm-tizen-linux-gnueabi-${tool#arm-linux-gnueabi-}"
+    if [ ! -f "$target" ]; then
+        ln -s "$tool" "$target"
+    fi
+done
+
+# Also link gcc to the specific version just in case
+if [ ! -f "arm-tizen-linux-gnueabi-gcc" ]; then
+    ln -s "arm-linux-gnueabi-gcc" "arm-tizen-linux-gnueabi-gcc"
+fi
+
+echo -e "${GREEN}✓ Toolchain symlinks created${NC}"
+
 
 # Step 2: Build Dependencies
 print_step "Step 2/4: Building Dependencies"
